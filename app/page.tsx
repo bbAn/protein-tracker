@@ -71,6 +71,27 @@ const ProteinTracker: React.FC = () => {
   // 사용자 표시명
   const [userDisplayName, setUserDisplayName] = useState<string>("");
 
+  // 한국 시간 기준 날짜 문자열 생성
+  const getKoreanDateString = (date: Date): string => {
+    // 한국 시간대로 변환 (UTC+9)
+    const koreanTime = new Date(date.getTime() + 9 * 60 * 60 * 1000);
+    return koreanTime.toISOString().split("T")[0]; // YYYY-MM-DD 형식
+  };
+
+  // 날짜 문자열을 일관성 있게 변환하는 함수
+  const dateStringToDateKey = (dateStr: string): string => {
+    // "2025-08-01" → "Thu Aug 01 2025" 형태로 변환
+    const [year, month, day] = dateStr.split("-");
+    const date = new Date(parseInt(year), parseInt(month) - 1, parseInt(day));
+    return date.toDateString();
+  };
+
+  // DateKey를 데이터베이스 날짜 형식으로 변환
+  const dateKeyToDateString = (dateKey: string): string => {
+    const date = new Date(dateKey);
+    return getKoreanDateString(date);
+  };
+
   // 사용자 인증 체크
   useEffect(() => {
     const checkUser = async (): Promise<void> => {
@@ -96,27 +117,29 @@ const ProteinTracker: React.FC = () => {
     checkUser();
   }, []);
 
-  // 사용자 데이터 로드
+  // 사용자 데이터 로드 (함수 기반)
   const loadUserData = async (userId: string): Promise<void> => {
     try {
-      // RLS 설정을 위해 현재 사용자 ID 설정
-      await supabase.rpc("set_config", {
-        setting_name: "app.current_user_id",
-        setting_value: userId,
-        is_local: true,
-      });
+      console.log("📊 사용자 데이터 로드 시작:", userId);
 
-      // 사용자 프로필 로드
-      const { data: profile } = await supabase
-        .from("user_profiles")
-        .select("username, body_weight")
-        .eq("id", userId)
-        .single();
+      // 함수를 통해 사용자 프로필 로드
+      const { data: profile, error: profileError } = await supabase.rpc(
+        "get_user_profile",
+        {
+          p_user_id: userId,
+        }
+      );
 
-      if (profile) {
-        setBodyWeight(profile.body_weight || 70);
-        setTempBodyWeight(String(profile.body_weight || 70)); // 임시 상태도 업데이트
-        setUserDisplayName(profile.username);
+      console.log("👤 프로필 조회 결과:", { profile, profileError });
+
+      if (profileError) {
+        console.error("프로필 로드 에러:", profileError);
+      } else if (profile && profile.length > 0) {
+        const userProfile = profile[0];
+        setBodyWeight(userProfile.body_weight || 70);
+        setTempBodyWeight(String(userProfile.body_weight || 70));
+        setUserDisplayName(userProfile.username);
+        console.log("✅ 프로필 로드 성공:", userProfile);
       }
 
       // 음식 데이터베이스 로드 (기본 음식 + 사용자 음식)
@@ -129,20 +152,38 @@ const ProteinTracker: React.FC = () => {
         setFoodDatabase(foods);
       }
 
-      // 최근 30일 기록 로드
+      // 최근 30일 기록 로드 (한국 시간 기준)
       const thirtyDaysAgo = new Date();
       thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+      const koreanDateFrom = getKoreanDateString(thirtyDaysAgo);
 
-      const { data: records } = await supabase
+      console.log("📅 기록 조회 기간:", { from: koreanDateFrom, userId });
+
+      const { data: records, error: recordsError } = await supabase
         .from("daily_records")
         .select("*")
         .eq("user_id", userId)
-        .gte("record_date", thirtyDaysAgo.toISOString().split("T")[0]);
+        .gte("record_date", koreanDateFrom)
+        .order("record_date", { ascending: false });
+
+      console.log("📊 기록 조회 결과:", {
+        records: records?.length,
+        recordsError,
+      });
 
       if (records) {
         const recordsMap: Record<string, DayRecord> = {};
         records.forEach((record: DailyRecord) => {
-          const dateKey = new Date(record.record_date).toDateString();
+          // 데이터베이스 날짜 문자열을 안전하게 DateKey로 변환
+          const dateKey = dateStringToDateKey(record.record_date);
+
+          console.log("📅 기록 처리:", {
+            dbDate: record.record_date,
+            dateKey,
+            meal: record.meal_type,
+            food: record.food_name,
+          });
+
           if (!recordsMap[dateKey]) {
             recordsMap[dateKey] = {
               breakfast: [],
@@ -157,10 +198,35 @@ const ProteinTracker: React.FC = () => {
             protein: record.protein_amount,
           });
         });
+
+        // 최종 확인 로그
+        console.log("📊 로드된 날짜별 기록:");
+        Object.keys(recordsMap).forEach((dateKey) => {
+          const dayData = recordsMap[dateKey];
+          const totalItems = [
+            ...dayData.breakfast,
+            ...dayData.lunch,
+            ...dayData.dinner,
+          ].length;
+          console.log(`  ${dateKey}: ${totalItems}개 항목`, {
+            breakfast: dayData.breakfast.length,
+            lunch: dayData.lunch.length,
+            dinner: dayData.dinner.length,
+            workout: dayData.isWorkoutDay,
+          });
+        });
+
         setDailyRecords(recordsMap);
+        console.log(
+          "✅ 기록 로드 완료:",
+          Object.keys(recordsMap).length + "일치 데이터"
+        );
+
+        // 중복 데이터 정리 (백그라운드에서 실행)
+        setTimeout(() => removeDuplicateRecords(), 2000);
       }
     } catch (error) {
-      console.error("Error loading user data:", error);
+      console.error("💥 사용자 데이터 로드 실패:", error);
     }
   };
 
@@ -369,18 +435,33 @@ const ProteinTracker: React.FC = () => {
     if (!food || !user) return;
 
     try {
-      const selectedDateObj = new Date(selectedDate);
       const currentRecord = getDayRecord(selectedDate);
 
-      // 데이터베이스에 저장
-      const { error } = await supabase.from("daily_records").insert({
-        user_id: user.id,
-        record_date: selectedDateObj.toISOString().split("T")[0],
-        meal_type: meal,
-        food_name: food.name,
-        protein_amount: food.protein,
-        is_workout_day: currentRecord.isWorkoutDay,
+      // 선택된 날짜를 데이터베이스 형식으로 변환
+      const dbDateString = dateKeyToDateString(selectedDate);
+
+      console.log("🍽️ 음식 추가:", {
+        selectedDate,
+        dbDateString,
+        meal,
+        food: food.name,
+        currentTime: new Date().toLocaleString("ko-KR"),
       });
+
+      // 데이터베이스에 저장
+      const { data, error } = await supabase
+        .from("daily_records")
+        .insert({
+          user_id: user.id,
+          record_date: dbDateString, // 변환된 날짜 사용
+          meal_type: meal,
+          food_name: food.name,
+          protein_amount: food.protein,
+          is_workout_day: currentRecord.isWorkoutDay,
+        })
+        .select(); // 생성된 데이터 반환
+
+      console.log("📝 데이터베이스 저장 결과:", { data, error });
 
       if (error) throw error;
 
@@ -395,20 +476,31 @@ const ProteinTracker: React.FC = () => {
         };
       }
 
+      // 실제 데이터베이스 ID 사용
+      const newRecord = data[0];
       updatedRecords[selectedDate][meal].push({
-        id: Date.now(),
+        id: newRecord.id, // 데이터베이스의 실제 ID
         name: food.name,
         protein: food.protein,
       });
 
       setDailyRecords(updatedRecords);
+      console.log("✅ 음식 추가 성공!", {
+        recordId: newRecord.id,
+        savedDate: newRecord.record_date,
+        totalItemsForDay: [
+          ...updatedRecords[selectedDate].breakfast,
+          ...updatedRecords[selectedDate].lunch,
+          ...updatedRecords[selectedDate].dinner,
+        ].length,
+      });
     } catch (error) {
-      console.error("Error adding food:", error);
+      console.error("❌ 음식 추가 실패:", error);
       alert("음식 추가 중 오류가 발생했습니다.");
     }
   };
 
-  // 음식 삭제
+  // 음식 삭제 (데이터베이스에서도 실제 삭제)
   const removeFoodFromMeal = async (
     meal: "breakfast" | "lunch" | "dinner",
     foodId: number
@@ -416,60 +508,184 @@ const ProteinTracker: React.FC = () => {
     if (!user) return;
 
     try {
-      const updatedRecords = { ...dailyRecords };
-      if (updatedRecords[selectedDate]) {
-        updatedRecords[selectedDate][meal] = updatedRecords[selectedDate][
-          meal
-        ].filter((food) => food.id !== foodId);
-        setDailyRecords(updatedRecords);
+      console.log("🗑️ 음식 삭제 시작:", { meal, foodId, selectedDate });
+
+      // 데이터베이스에서 삭제
+      const { data, error } = await supabase
+        .from("daily_records")
+        .delete()
+        .eq("id", foodId)
+        .eq("user_id", user.id)
+        .select(); // 삭제된 데이터 확인
+
+      console.log("🗑️ 데이터베이스 삭제 결과:", { data, error });
+
+      if (error) {
+        console.error("데이터베이스 삭제 실패:", error);
+        alert("삭제 중 오류가 발생했습니다: " + error.message);
+        return;
+      }
+
+      // 실제로 삭제된 경우에만 로컬 상태 업데이트
+      if (data && data.length > 0) {
+        const updatedRecords = { ...dailyRecords };
+        if (updatedRecords[selectedDate]) {
+          updatedRecords[selectedDate][meal] = updatedRecords[selectedDate][
+            meal
+          ].filter((food) => food.id !== foodId);
+          setDailyRecords(updatedRecords);
+          console.log("✅ 음식 삭제 성공!");
+        }
+      } else {
+        console.warn("⚠️ 삭제할 데이터를 찾을 수 없습니다.");
+        alert("삭제할 항목을 찾을 수 없습니다.");
       }
     } catch (error) {
-      console.error("Error removing food:", error);
+      console.error("❌ 음식 삭제 실패:", error);
+      alert("삭제 중 오류가 발생했습니다.");
     }
   };
 
-  // 운동 여부 토글
+  // 운동 여부 토글 (데이터베이스에도 반영)
   const toggleWorkoutDay = async (): Promise<void> => {
     if (!user) return;
 
-    const updatedRecords = { ...dailyRecords };
-    if (!updatedRecords[selectedDate]) {
-      updatedRecords[selectedDate] = {
-        breakfast: [],
-        lunch: [],
-        dinner: [],
-        isWorkoutDay: false,
-      };
+    try {
+      const updatedRecords = { ...dailyRecords };
+      if (!updatedRecords[selectedDate]) {
+        updatedRecords[selectedDate] = {
+          breakfast: [],
+          lunch: [],
+          dinner: [],
+          isWorkoutDay: false,
+        };
+      }
+
+      const newWorkoutStatus = !updatedRecords[selectedDate].isWorkoutDay;
+      updatedRecords[selectedDate].isWorkoutDay = newWorkoutStatus;
+
+      console.log("💪 운동 여부 토글:", { selectedDate, newWorkoutStatus });
+
+      // 선택된 날짜를 데이터베이스 형식으로 변환
+      const dbDateString = dateKeyToDateString(selectedDate);
+
+      console.log("💪 DB 업데이트:", {
+        selectedDate,
+        dbDateString,
+        newWorkoutStatus,
+      });
+
+      const { data, error } = await supabase
+        .from("daily_records")
+        .update({ is_workout_day: newWorkoutStatus })
+        .eq("user_id", user.id)
+        .eq("record_date", dbDateString)
+        .select();
+
+      console.log("💪 운동 여부 업데이트 결과:", { data, error });
+
+      if (error) {
+        console.error("운동 여부 업데이트 실패:", error);
+        // 실패시 로컬 상태 되돌리기
+        updatedRecords[selectedDate].isWorkoutDay = !newWorkoutStatus;
+      }
+
+      setDailyRecords(updatedRecords);
+    } catch (error) {
+      console.error("❌ 운동 여부 토글 실패:", error);
     }
-    updatedRecords[selectedDate].isWorkoutDay =
-      !updatedRecords[selectedDate].isWorkoutDay;
-    setDailyRecords(updatedRecords);
   };
 
-  // 체중 업데이트 (실제 저장)
+  // 체중 업데이트 (함수 기반)
   const updateBodyWeight = async (newWeight: number): Promise<void> => {
     if (!user || newWeight <= 0) return;
 
+    console.log("💪 체중 업데이트 시작:", { userId: user.id, newWeight });
+
     try {
-      // RLS 설정
-      await supabase.rpc("set_config", {
-        setting_name: "app.current_user_id",
-        setting_value: user.id,
-        is_local: true,
+      const { data, error } = await supabase.rpc("update_user_weight", {
+        p_user_id: user.id,
+        p_new_weight: newWeight,
       });
 
-      const { error } = await supabase
-        .from("user_profiles")
-        .update({ body_weight: newWeight })
-        .eq("id", user.id);
+      console.log("📝 체중 업데이트 결과:", { data, error });
 
       if (error) throw error;
+
       setBodyWeight(newWeight);
       setTempBodyWeight(String(newWeight));
+      console.log("✅ 체중 업데이트 성공!");
     } catch (error) {
-      console.error("Error updating body weight:", error);
-      // 에러 발생시 원래 값으로 복원
+      console.error("❌ 체중 업데이트 실패:", error);
       setTempBodyWeight(String(bodyWeight));
+      alert("체중 업데이트 실패: " + (error as Error)?.message);
+    }
+  };
+
+  // 데이터 중복 제거 (임시 해결책)
+  const removeDuplicateRecords = async (): Promise<void> => {
+    if (!user) return;
+
+    try {
+      console.log("🧹 중복 데이터 정리 시작...");
+
+      // 최근 7일 데이터 조회
+      const sevenDaysAgo = new Date();
+      sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
+      const dateFrom = getKoreanDateString(sevenDaysAgo);
+
+      const { data: allRecords, error } = await supabase
+        .from("daily_records")
+        .select("*")
+        .eq("user_id", user.id)
+        .gte("record_date", dateFrom)
+        .order("created_at", { ascending: true });
+
+      if (error || !allRecords) {
+        console.log("중복 정리 스킵:", error);
+        return;
+      }
+
+      // 중복 찾기 (같은 날짜, 같은 식사, 같은 음식)
+      const seen = new Set<string>();
+      const duplicates: number[] = [];
+
+      allRecords.forEach((record) => {
+        const key = `${record.record_date}-${record.meal_type}-${record.food_name}-${record.protein_amount}`;
+        if (seen.has(key)) {
+          duplicates.push(record.id);
+          console.log("🔍 중복 발견:", {
+            id: record.id,
+            date: record.record_date,
+            meal: record.meal_type,
+            food: record.food_name,
+          });
+        } else {
+          seen.add(key);
+        }
+      });
+
+      // 중복 데이터 삭제
+      if (duplicates.length > 0) {
+        console.log(`🗑️ ${duplicates.length}개 중복 데이터 삭제 중...`);
+
+        const { error: deleteError } = await supabase
+          .from("daily_records")
+          .delete()
+          .in("id", duplicates);
+
+        if (deleteError) {
+          console.error("중복 삭제 실패:", deleteError);
+        } else {
+          console.log("✅ 중복 데이터 정리 완료!");
+          // 데이터 다시 로드
+          await loadUserData(user.id);
+        }
+      } else {
+        console.log("✅ 중복 데이터 없음");
+      }
+    } catch (error) {
+      console.error("중복 정리 중 오류:", error);
     }
   };
 
@@ -714,11 +930,11 @@ const ProteinTracker: React.FC = () => {
       <div className="max-w-6xl mx-auto">
         {/* 헤더 */}
         <div className="bg-white rounded-2xl shadow-lg p-6 mb-6">
-          <div className="flex justify-between items-center">
-            <h1 className="text-3xl font-bold text-gray-800 flex items-center gap-2">
-              <Calendar className="text-blue-600" />
-              Protein Tracker
-            </h1>
+          <h1 className="text-3xl font-bold text-gray-800 flex items-center gap-2 mb-2">
+            <Calendar className="text-blue-600" />
+            Protein Tracker
+          </h1>
+          <div className="flex justify-end items-center">
             <div className="flex items-center gap-4">
               <div className="flex items-center gap-2 text-sm text-gray-600">
                 <User size={16} />
@@ -730,21 +946,21 @@ const ProteinTracker: React.FC = () => {
                   className="flex items-center gap-2 px-4 py-2 bg-green-500 text-white rounded-lg hover:bg-green-600 transition-colors"
                 >
                   <Calculator size={20} />
-                  계산기
+                  {/* 계산기 */}
                 </button>
                 <button
                   onClick={() => setShowSettings(true)}
                   className="flex items-center gap-2 px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors"
                 >
                   <Settings size={20} />
-                  설정
+                  {/* 설정 */}
                 </button>
                 <button
                   onClick={handleLogout}
                   className="flex items-center gap-2 px-4 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600 transition-colors"
                 >
                   <LogOut size={20} />
-                  로그아웃
+                  {/* 로그아웃 */}
                 </button>
               </div>
             </div>
@@ -893,6 +1109,27 @@ const ProteinTracker: React.FC = () => {
                     {(targetProtein - totalProtein).toFixed(1)}g 부족
                   </span>
                 )}
+              </div>
+
+              {/* 디버깅 정보 (개발 중에만 표시) */}
+              <div className="text-xs text-gray-400 mt-2 p-2 bg-gray-50 rounded">
+                <div>🕐 현재 시간: {new Date().toLocaleString("ko-KR")}</div>
+                <div>📅 선택된 날짜: {selectedDate}</div>
+                <div>🌏 DB 저장 날짜: {dateKeyToDateString(selectedDate)}</div>
+                <div>
+                  📊 오늘 기록 수:{" "}
+                  {
+                    [
+                      ...currentRecord.breakfast,
+                      ...currentRecord.lunch,
+                      ...currentRecord.dinner,
+                    ].length
+                  }
+                  개
+                </div>
+                <div>
+                  💪 운동한 날: {currentRecord.isWorkoutDay ? "✅" : "❌"}
+                </div>
               </div>
             </div>
 
@@ -1091,6 +1328,37 @@ const ProteinTracker: React.FC = () => {
                       </div>
                     ))}
                 </div>
+              </div>
+
+              {/* 중복 데이터 정리 버튼 */}
+              <div className="mb-4 p-3 bg-blue-50 rounded-lg border border-blue-200">
+                <h4 className="font-medium text-blue-800 mb-2">
+                  🧹 데이터 정리
+                </h4>
+                <p className="text-xs text-blue-600 mb-2">
+                  중복된 음식 기록을 정리합니다. (같은 날짜, 같은 식사, 같은
+                  음식)
+                </p>
+                <div className="text-xs text-blue-600 mb-2">
+                  📊 현재 로드된 날짜: {Object.keys(dailyRecords).length}일
+                  <br />
+                  📝 총 기록 수:{" "}
+                  {Object.values(dailyRecords).reduce(
+                    (total, day) =>
+                      total +
+                      day.breakfast.length +
+                      day.lunch.length +
+                      day.dinner.length,
+                    0
+                  )}
+                  개
+                </div>
+                <button
+                  onClick={removeDuplicateRecords}
+                  className="w-full py-2 bg-blue-500 text-white rounded text-sm hover:bg-blue-600"
+                >
+                  중복 데이터 정리하기
+                </button>
               </div>
             </div>
           </div>
