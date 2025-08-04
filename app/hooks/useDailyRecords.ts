@@ -76,7 +76,7 @@ export const useDailyRecords = (
         setDailyRecords(recordsMap);
 
         // 중복 데이터 정리 (백그라운드)
-        setTimeout(() => removeDuplicateRecords(userId), 2000);
+        // setTimeout(() => removeDuplicateRecords(userId), 2000);
       }
     } catch (error) {
       console.error("💥 사용자 데이터 로드 실패:", error);
@@ -252,68 +252,68 @@ export const useDailyRecords = (
   };
 
   // 중복 데이터 제거
-  const removeDuplicateRecords = async (userId?: string): Promise<void> => {
-    const targetUserId = userId || user?.id;
-    if (!targetUserId) return;
+  // const removeDuplicateRecords = async (userId?: string): Promise<void> => {
+  //   const targetUserId = userId || user?.id;
+  //   if (!targetUserId) return;
 
-    try {
-      console.log("🧹 중복 데이터 정리 시작...");
+  //   try {
+  //     console.log("🧹 중복 데이터 정리 시작...");
 
-      const sevenDaysAgo = new Date();
-      sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
-      const dateFrom = getKoreanDateString(sevenDaysAgo);
+  //     const sevenDaysAgo = new Date();
+  //     sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
+  //     const dateFrom = getKoreanDateString(sevenDaysAgo);
 
-      const { data: allRecords, error } = await supabase
-        .from("daily_records")
-        .select("*")
-        .eq("user_id", targetUserId)
-        .gte("record_date", dateFrom)
-        .order("created_at", { ascending: true });
+  //     const { data: allRecords, error } = await supabase
+  //       .from("daily_records")
+  //       .select("*")
+  //       .eq("user_id", targetUserId)
+  //       .gte("record_date", dateFrom)
+  //       .order("created_at", { ascending: true });
 
-      if (error || !allRecords) {
-        console.log("중복 정리 스킵:", error);
-        return;
-      }
+  //     if (error || !allRecords) {
+  //       console.log("중복 정리 스킵:", error);
+  //       return;
+  //     }
 
-      const seen = new Set<string>();
-      const duplicates: number[] = [];
+  //     const seen = new Set<string>();
+  //     const duplicates: number[] = [];
 
-      allRecords.forEach((record) => {
-        const key = `${record.record_date}-${record.meal_type}-${record.food_name}-${record.protein_amount}`;
-        if (seen.has(key)) {
-          duplicates.push(record.id);
-          console.log("🔍 중복 발견:", {
-            id: record.id,
-            date: record.record_date,
-            meal: record.meal_type,
-            food: record.food_name,
-          });
-        } else {
-          seen.add(key);
-        }
-      });
+  //     allRecords.forEach((record) => {
+  //       const key = `${record.record_date}-${record.meal_type}-${record.food_name}-${record.protein_amount}`;
+  //       if (seen.has(key)) {
+  //         duplicates.push(record.id);
+  //         console.log("🔍 중복 발견:", {
+  //           id: record.id,
+  //           date: record.record_date,
+  //           meal: record.meal_type,
+  //           food: record.food_name,
+  //         });
+  //       } else {
+  //         seen.add(key);
+  //       }
+  //     });
 
-      if (duplicates.length > 0) {
-        console.log(`🗑️ ${duplicates.length}개 중복 데이터 삭제 중...`);
+  //     if (duplicates.length > 0) {
+  //       console.log(`🗑️ ${duplicates.length}개 중복 데이터 삭제 중...`);
 
-        const { error: deleteError } = await supabase
-          .from("daily_records")
-          .delete()
-          .in("id", duplicates);
+  //       const { error: deleteError } = await supabase
+  //         .from("daily_records")
+  //         .delete()
+  //         .in("id", duplicates);
 
-        if (deleteError) {
-          console.error("중복 삭제 실패:", deleteError);
-        } else {
-          console.log("✅ 중복 데이터 정리 완료!");
-          await loadDailyRecords(targetUserId);
-        }
-      } else {
-        console.log("✅ 중복 데이터 없음");
-      }
-    } catch (error) {
-      console.error("중복 정리 중 오류:", error);
-    }
-  };
+  //       if (deleteError) {
+  //         console.error("중복 삭제 실패:", deleteError);
+  //       } else {
+  //         console.log("✅ 중복 데이터 정리 완료!");
+  //         await loadDailyRecords(targetUserId);
+  //       }
+  //     } else {
+  //       console.log("✅ 중복 데이터 없음");
+  //     }
+  //   } catch (error) {
+  //     console.error("중복 정리 중 오류:", error);
+  //   }
+  // };
 
   return {
     // 상태
@@ -328,6 +328,6 @@ export const useDailyRecords = (
     addFoodToMeal,
     removeFoodFromMeal,
     toggleWorkoutDay,
-    removeDuplicateRecords,
+    // removeDuplicateRecords,
   };
 };
