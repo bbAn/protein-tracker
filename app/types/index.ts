@@ -50,4 +50,4 @@ export type MealType = "breakfast" | "lunch" | "dinner";
 
 export type AuthMode = "login" | "signup";
 
-export { SupabaseUser };
+export type { SupabaseUser };

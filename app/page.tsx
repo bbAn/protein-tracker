@@ -5,7 +5,7 @@ import {
   Calendar,
   Plus,
   Settings,
-  Calculator,
+  // Calculator,
   Trash2,
   Edit,
   Check,
