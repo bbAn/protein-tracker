@@ -376,11 +376,13 @@ const ProteinTracker: React.FC = () => {
                     className="w-full p-2 text-sm border rounded-lg"
                   >
                     <option value="">음식 추가...</option>
-                    {food.foodDatabase.map((foodItem) => (
-                      <option key={foodItem.id} value={foodItem.id}>
-                        {foodItem.name} ({foodItem.protein}g)
-                      </option>
-                    ))}
+                    {food.foodDatabase
+                      .sort((a, b) => a.name.localeCompare(b.name)) // 오름차순 정렬 추가
+                      .map((foodItem) => (
+                        <option key={foodItem.id} value={foodItem.id}>
+                          {foodItem.name} ({foodItem.protein}g)
+                        </option>
+                      ))}
                   </select>
                 </div>
               );
