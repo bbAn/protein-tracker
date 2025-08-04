@@ -1,0 +1,12 @@
+{
+  "version": "0.2",
+  "language": "en",
+  "words": ["supabase", "Supabase", "lucide"],
+  "ignorePaths": [
+    "node_modules/**",
+    ".git/**",
+    "dist/**",
+    "build/**",
+    "*.min.js"
+  ]
+}
