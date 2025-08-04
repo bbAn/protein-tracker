@@ -532,7 +532,7 @@ const ProteinTracker: React.FC = () => {
               </div>
 
               {/* 중복 데이터 정리 버튼 */}
-              <div className="mb-4 p-3 bg-blue-50 rounded-lg border border-blue-200">
+              {/* <div className="mb-4 p-3 bg-blue-50 rounded-lg border border-blue-200">
                 <h4 className="font-medium text-blue-800 mb-2">
                   🧹 데이터 정리
                 </h4>
@@ -561,7 +561,7 @@ const ProteinTracker: React.FC = () => {
                 >
                   중복 데이터 정리하기
                 </button>
-              </div>
+              </div> */}
             </div>
           </div>
         )}
