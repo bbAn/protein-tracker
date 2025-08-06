@@ -3,9 +3,11 @@
 import React, { useState, useEffect } from "react";
 import {
   Calendar,
+  Plus,
   Settings,
-  // Calculator,
   Trash2,
+  Edit,
+  Check,
   X,
   LogOut,
   User,
@@ -391,7 +393,7 @@ const ProteinTracker: React.FC = () => {
         {/* 설정 모달 */}
         {showSettings && (
           <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-            <div className="bg-white rounded-2xl p-6 max-w-md w-full mx-4 max-h-96 overflow-y-auto">
+            <div className="bg-white rounded-2xl p-6 max-w-md w-full mx-4 max-h-[80vh] overflow-y-auto">
               <div className="flex justify-between items-center mb-6">
                 <h3 className="text-lg font-semibold">설정</h3>
                 <button
@@ -501,6 +503,124 @@ const ProteinTracker: React.FC = () => {
                 <p className="text-xs text-blue-600 mt-2">
                   💡 입력 후 엔터키를 누르거나 다른 곳을 클릭하면 저장됩니다.
                 </p>
+              </div>
+
+              {/* 나만의 음식 관리 */}
+              <div className="mb-6">
+                <h4 className="font-medium mb-3">나만의 음식 관리</h4>
+
+                {/* 새 음식 추가 */}
+                <div className="flex gap-2 mb-3">
+                  <input
+                    type="text"
+                    placeholder="음식 이름 (예: 닭가슴살 150g)"
+                    value={food.newFood.name}
+                    onChange={(e) =>
+                      food.setNewFood({ ...food.newFood, name: e.target.value })
+                    }
+                    className="flex-1 p-2 text-sm border rounded-lg focus:ring-2 focus:ring-blue-500"
+                  />
+                  <input
+                    type="number"
+                    step="0.1"
+                    placeholder="단백질(g)"
+                    value={food.newFood.protein}
+                    onChange={(e) =>
+                      food.setNewFood({
+                        ...food.newFood,
+                        protein: e.target.value,
+                      })
+                    }
+                    className="w-24 p-2 text-sm border rounded-lg focus:ring-2 focus:ring-blue-500"
+                  />
+                  <button
+                    onClick={food.addNewFood}
+                    disabled={!food.newFood.name || !food.newFood.protein}
+                    className="px-3 py-2 bg-green-500 text-white rounded-lg hover:bg-green-600 disabled:bg-gray-300 disabled:cursor-not-allowed"
+                  >
+                    <Plus size={16} />
+                  </button>
+                </div>
+
+                {/* 내가 추가한 음식 목록 */}
+                <div className="space-y-2 max-h-40 overflow-y-auto">
+                  {food.foodDatabase
+                    .filter((foodItem) => foodItem.user_id === auth.user?.id)
+                    .map((foodItem) => (
+                      <div
+                        key={foodItem.id}
+                        className="flex justify-between items-center text-sm bg-gray-50 p-2 rounded-lg"
+                      >
+                        {food.editingFood === foodItem.id ? (
+                          // 편집 모드
+                          <div className="flex gap-2 flex-1">
+                            <input
+                              type="text"
+                              defaultValue={foodItem.name}
+                              onKeyDown={(e) => {
+                                if (e.key === "Enter") {
+                                  const target = e.target as HTMLInputElement;
+                                  food.updateFood(foodItem.id, {
+                                    name: target.value,
+                                  });
+                                }
+                              }}
+                              className="flex-1 p-1 text-xs border rounded focus:ring-1 focus:ring-blue-500"
+                            />
+                            <input
+                              type="number"
+                              step="0.1"
+                              defaultValue={foodItem.protein}
+                              onKeyDown={(e) => {
+                                if (e.key === "Enter") {
+                                  const target = e.target as HTMLInputElement;
+                                  food.updateFood(foodItem.id, {
+                                    protein: parseFloat(target.value),
+                                  });
+                                }
+                              }}
+                              className="w-16 p-1 text-xs border rounded focus:ring-1 focus:ring-blue-500"
+                            />
+                            <button
+                              onClick={() => food.setEditingFood(null)}
+                              className="text-green-500 hover:text-green-700"
+                            >
+                              <Check size={14} />
+                            </button>
+                          </div>
+                        ) : (
+                          // 보기 모드
+                          <>
+                            <span className="flex-1">
+                              {foodItem.name} ({foodItem.protein}g)
+                            </span>
+                            <div className="flex gap-1">
+                              <button
+                                onClick={() => food.setEditingFood(foodItem.id)}
+                                className="text-blue-500 hover:text-blue-700 p-1"
+                              >
+                                <Edit size={12} />
+                              </button>
+                              <button
+                                onClick={() => food.deleteFood(foodItem.id)}
+                                className="text-red-500 hover:text-red-700 p-1"
+                              >
+                                <Trash2 size={12} />
+                              </button>
+                            </div>
+                          </>
+                        )}
+                      </div>
+                    ))}
+                </div>
+
+                {food.foodDatabase.filter(
+                  (foodItem) => foodItem.user_id === auth.user?.id
+                ).length === 0 && (
+                  <p className="text-sm text-gray-500 text-center py-4">
+                    아직 추가한 음식이 없습니다.
+                  </p>
+                )}
               </div>
 
               {/* 닫기 버튼 */}
