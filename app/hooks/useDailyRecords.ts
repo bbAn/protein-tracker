@@ -315,6 +315,70 @@ export const useDailyRecords = (
   //   }
   // };
 
+  // 직접 입력으로 음식 추가
+  const addDirectFoodToMeal = async (
+    meal: MealType,
+    foodName: string,
+    proteinAmount: number,
+    selectedDate: string
+  ): Promise<boolean> => {
+    if (!user) return false;
+
+    try {
+      const currentRecord = getDayRecord(selectedDate);
+      const dbDateString = dateKeyToDateString(selectedDate);
+
+      console.log("🍽️ 직접 입력 음식 추가:", {
+        selectedDate,
+        dbDateString,
+        meal,
+        foodName,
+        proteinAmount,
+        currentTime: new Date().toLocaleString("ko-KR"),
+      });
+
+      const { data, error } = await supabase
+        .from("daily_records")
+        .insert({
+          user_id: user.id,
+          record_date: dbDateString,
+          meal_type: meal,
+          food_name: foodName,
+          protein_amount: proteinAmount,
+          is_workout_day: currentRecord.isWorkoutDay,
+        })
+        .select();
+
+      if (error) throw error;
+
+      // 로컬 상태 업데이트
+      const updatedRecords = { ...dailyRecords };
+      if (!updatedRecords[selectedDate]) {
+        updatedRecords[selectedDate] = {
+          breakfast: [],
+          lunch: [],
+          dinner: [],
+          isWorkoutDay: false,
+        };
+      }
+
+      const newRecord = data[0];
+      updatedRecords[selectedDate][meal].push({
+        id: newRecord.id,
+        name: foodName,
+        protein: proteinAmount,
+      });
+
+      setDailyRecords(updatedRecords);
+      console.log("✅ 직접 입력 음식 추가 성공!");
+      return true;
+    } catch (error) {
+      console.error("❌ 직접 입력 음식 추가 실패:", error);
+      alert("음식 추가 중 오류가 발생했습니다.");
+      return false;
+    }
+  };
+
   return {
     // 상태
     dailyRecords,
@@ -326,6 +390,7 @@ export const useDailyRecords = (
     // 액션
     loadDailyRecords,
     addFoodToMeal,
+    addDirectFoodToMeal,
     removeFoodFromMeal,
     toggleWorkoutDay,
     // removeDuplicateRecords,

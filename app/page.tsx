@@ -27,7 +27,7 @@ import { generateCalendar, dateKeyToDateString } from "./utils/dateUtils";
 
 // Constants
 import { MEAL_NAMES, DAY_NAMES, PROTEIN_GOALS } from "./constants";
-import { ProteinGoal } from "./types";
+import { ProteinGoal, MealType } from "./types";
 
 const ProteinTracker: React.FC = () => {
   // 상태
@@ -37,6 +37,25 @@ const ProteinTracker: React.FC = () => {
   );
   const [showSettings, setShowSettings] = useState<boolean>(false);
   const [showCalculator, setShowCalculator] = useState<boolean>(false);
+  const [directInputMode, setDirectInputMode] = useState<{
+    breakfast: boolean;
+    lunch: boolean;
+    dinner: boolean;
+  }>({
+    breakfast: false,
+    lunch: false,
+    dinner: false,
+  });
+
+  const [directInputData, setDirectInputData] = useState<{
+    breakfast: { name: string; protein: string };
+    lunch: { name: string; protein: string };
+    dinner: { name: string; protein: string };
+  }>({
+    breakfast: { name: "", protein: "" },
+    lunch: { name: "", protein: "" },
+    dinner: { name: "", protein: "" },
+  });
 
   // 커스텀 훅들
   const auth = useAuth();
@@ -109,6 +128,54 @@ const ProteinTracker: React.FC = () => {
     (totalProtein / targetProtein) * 100,
     100
   );
+
+  // 직접 입력으로 음식 추가하는 함수
+  const addDirectFood = async (meal: "breakfast" | "lunch" | "dinner") => {
+    const inputData = directInputData[meal];
+
+    if (!inputData.name || !inputData.protein) {
+      alert("음식명과 단백질량을 모두 입력해주세요.");
+      return;
+    }
+
+    const proteinAmount = parseFloat(inputData.protein);
+    if (isNaN(proteinAmount) || proteinAmount <= 0) {
+      alert("올바른 단백질량을 입력해주세요.");
+      return;
+    }
+
+    const success = await dailyRecords.addDirectFoodToMeal(
+      meal,
+      inputData.name,
+      proteinAmount,
+      selectedDate
+    );
+
+    if (success) {
+      // 입력 필드 초기화
+      setDirectInputData((prev) => ({
+        ...prev,
+        [meal]: { name: "", protein: "" },
+      }));
+
+      // 직접 입력 모드 해제
+      setDirectInputMode((prev) => ({
+        ...prev,
+        [meal]: false,
+      }));
+    }
+  };
+
+  // Enter 키 처리 함수
+  const handleDirectInputKeyDown = (
+    e: React.KeyboardEvent,
+    meal: "breakfast" | "lunch" | "dinner"
+  ) => {
+    if (e.key === "Enter") {
+      e.preventDefault();
+      addDirectFood(meal);
+    }
+  };
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 p-4">
@@ -269,7 +336,6 @@ const ProteinTracker: React.FC = () => {
                 <span className="text-sm">운동한 날</span>
               </label>
             </div>
-
             {/* 진행률 */}
             <div className="mb-6">
               <div className="flex justify-between text-sm mb-2">
@@ -362,28 +428,109 @@ const ProteinTracker: React.FC = () => {
                     ))}
                   </div>
 
-                  <select
-                    onChange={(e) => {
-                      if (e.target.value) {
-                        dailyRecords.addFoodToMeal(
-                          meal,
-                          parseInt(e.target.value),
-                          selectedDate
-                        );
-                        e.target.value = "";
+                  {/* 입력 모드 토글 버튼 */}
+                  <div className="flex gap-2 mb-2">
+                    <button
+                      onClick={() =>
+                        setDirectInputMode((prev) => ({
+                          ...prev,
+                          [meal]: false,
+                        }))
                       }
-                    }}
-                    className="w-full p-2 text-sm border rounded-lg"
-                  >
-                    <option value="">음식 추가...</option>
-                    {food.foodDatabase
-                      .sort((a, b) => a.name.localeCompare(b.name)) // 오름차순 정렬 추가
-                      .map((foodItem) => (
-                        <option key={foodItem.id} value={foodItem.id}>
-                          {foodItem.name} ({foodItem.protein}g)
-                        </option>
-                      ))}
-                  </select>
+                      className={`px-3 py-1 text-xs rounded-lg ${
+                        !directInputMode[meal]
+                          ? "bg-blue-500 text-white"
+                          : "bg-gray-200 text-gray-700 hover:bg-gray-300"
+                      }`}
+                    >
+                      목록선택
+                    </button>
+                    <button
+                      onClick={() =>
+                        setDirectInputMode((prev) => ({
+                          ...prev,
+                          [meal]: true,
+                        }))
+                      }
+                      className={`px-3 py-1 text-xs rounded-lg ${
+                        directInputMode[meal]
+                          ? "bg-blue-500 text-white"
+                          : "bg-gray-200 text-gray-700 hover:bg-gray-300"
+                      }`}
+                    >
+                      직접입력
+                    </button>
+                  </div>
+
+                  {directInputMode[meal] ? (
+                    /* 직접 입력 모드 */
+                    <div className="space-y-2">
+                      <input
+                        type="text"
+                        placeholder="음식명 (예: 삼겹살 200g)"
+                        value={directInputData[meal].name}
+                        onChange={(e) =>
+                          setDirectInputData((prev) => ({
+                            ...prev,
+                            [meal]: { ...prev[meal], name: e.target.value },
+                          }))
+                        }
+                        className="w-full p-2 text-sm border rounded-lg focus:ring-2 focus:ring-blue-500"
+                      />
+                      <div className="flex gap-2">
+                        <input
+                          type="number"
+                          step="0.1"
+                          placeholder="단백질(g)"
+                          value={directInputData[meal].protein}
+                          onChange={(e) =>
+                            setDirectInputData((prev) => ({
+                              ...prev,
+                              [meal]: {
+                                ...prev[meal],
+                                protein: e.target.value,
+                              },
+                            }))
+                          }
+                          className="flex-1 p-2 text-sm border rounded-lg focus:ring-2 focus:ring-blue-500"
+                        />
+                        <button
+                          onClick={() => addDirectFood(meal)}
+                          disabled={
+                            !directInputData[meal].name ||
+                            !directInputData[meal].protein
+                          }
+                          className="px-4 py-2 bg-green-500 text-white rounded-lg hover:bg-green-600 disabled:bg-gray-300 disabled:cursor-not-allowed text-sm"
+                        >
+                          추가
+                        </button>
+                      </div>
+                    </div>
+                  ) : (
+                    /* 기존 dropdown 선택 모드 */
+                    <select
+                      onChange={(e) => {
+                        if (e.target.value) {
+                          dailyRecords.addFoodToMeal(
+                            meal,
+                            parseInt(e.target.value),
+                            selectedDate
+                          );
+                          e.target.value = "";
+                        }
+                      }}
+                      className="w-full p-2 text-sm border rounded-lg"
+                    >
+                      <option value="">음식 추가...</option>
+                      {food.foodDatabase
+                        .sort((a, b) => a.name.localeCompare(b.name)) // 오름차순 정렬 추가
+                        .map((foodItem) => (
+                          <option key={foodItem.id} value={foodItem.id}>
+                            {foodItem.name} ({foodItem.protein}g)
+                          </option>
+                        ))}
+                    </select>
+                  )}
                 </div>
               );
             })}
