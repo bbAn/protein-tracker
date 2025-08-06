@@ -3,12 +3,9 @@
 import React, { useState, useEffect } from "react";
 import {
   Calendar,
-  Plus,
   Settings,
   // Calculator,
   Trash2,
-  Edit,
-  Check,
   X,
   LogOut,
   User,
@@ -27,7 +24,8 @@ import { AuthForm } from "./components/auth/AuthForm";
 import { generateCalendar, dateKeyToDateString } from "./utils/dateUtils";
 
 // Constants
-import { MEAL_NAMES, DAY_NAMES } from "./constants";
+import { MEAL_NAMES, DAY_NAMES, PROTEIN_GOALS } from "./constants";
+import { ProteinGoal } from "./types";
 
 const ProteinTracker: React.FC = () => {
   // 상태
@@ -394,7 +392,7 @@ const ProteinTracker: React.FC = () => {
         {showSettings && (
           <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
             <div className="bg-white rounded-2xl p-6 max-w-md w-full mx-4 max-h-96 overflow-y-auto">
-              <div className="flex justify-between items-center mb-4">
+              <div className="flex justify-between items-center mb-6">
                 <h3 className="text-lg font-semibold">설정</h3>
                 <button
                   onClick={() => setShowSettings(false)}
@@ -404,6 +402,49 @@ const ProteinTracker: React.FC = () => {
                 </button>
               </div>
 
+              {/* 단백질 목적 설정 */}
+              <div className="mb-6">
+                <label className="block text-sm font-medium mb-3">
+                  단백질 섭취 목적
+                </label>
+                <div className="space-y-3">
+                  {Object.entries(PROTEIN_GOALS).map(([key, goal]) => (
+                    <div
+                      key={key}
+                      className={`p-3 rounded-lg border-2 cursor-pointer transition-all ${
+                        bodyWeight.proteinGoal === key
+                          ? "border-blue-500 bg-blue-50"
+                          : "border-gray-200 hover:border-gray-300"
+                      }`}
+                      onClick={() =>
+                        bodyWeight.updateProteinGoal(key as ProteinGoal)
+                      }
+                    >
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-2">
+                          <span className="text-lg">{goal.icon}</span>
+                          <div>
+                            <div className="font-medium">{goal.name}</div>
+                            <div className="text-xs text-gray-600">
+                              {goal.description}
+                            </div>
+                          </div>
+                        </div>
+                        <div className="text-right">
+                          <div className="text-xs text-gray-500">
+                            일반: {goal.normal}g/kg
+                          </div>
+                          <div className="text-xs text-gray-500">
+                            운동: {goal.workout}g/kg
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {/* 체중 설정 */}
               <div className="mb-6">
                 <label className="block text-sm font-medium mb-2">
                   체중 (kg)
@@ -423,147 +464,54 @@ const ProteinTracker: React.FC = () => {
                   min="1"
                   step="0.1"
                 />
-                <p className="text-xs text-gray-600 mt-1">
-                  일반: {(bodyWeight.bodyWeight * 1.6).toFixed(0)}g, 운동:{" "}
-                  {(bodyWeight.bodyWeight * 2.2).toFixed(0)}g
-                </p>
-                <p className="text-xs text-blue-600 mt-1">
+
+                {/* 현재 설정에 따른 단백질 목표량 표시 */}
+                <div className="mt-2 p-3 bg-gray-50 rounded-lg">
+                  <div className="text-sm font-medium text-gray-700 mb-1">
+                    {bodyWeight.getProteinMultipliers().goalIcon} 현재 설정:{" "}
+                    {bodyWeight.getProteinMultipliers().goalName}
+                  </div>
+                  <div className="text-xs text-gray-600 mb-2">
+                    {bodyWeight.getProteinMultipliers().description}
+                  </div>
+                  <div className="flex justify-between text-sm">
+                    <span className="text-gray-600">
+                      일반:{" "}
+                      <strong>
+                        {(
+                          bodyWeight.bodyWeight *
+                          bodyWeight.getProteinMultipliers().normal
+                        ).toFixed(0)}
+                        g
+                      </strong>
+                    </span>
+                    <span className="text-gray-600">
+                      운동:{" "}
+                      <strong>
+                        {(
+                          bodyWeight.bodyWeight *
+                          bodyWeight.getProteinMultipliers().workout
+                        ).toFixed(0)}
+                        g
+                      </strong>
+                    </span>
+                  </div>
+                </div>
+
+                <p className="text-xs text-blue-600 mt-2">
                   💡 입력 후 엔터키를 누르거나 다른 곳을 클릭하면 저장됩니다.
                 </p>
               </div>
 
-              <div className="mb-4">
-                <h4 className="font-medium mb-2">나만의 음식 추가</h4>
-                <div className="flex gap-2 mb-2">
-                  <input
-                    type="text"
-                    placeholder="음식 이름"
-                    value={food.newFood.name}
-                    onChange={(e) =>
-                      food.setNewFood({ ...food.newFood, name: e.target.value })
-                    }
-                    className="flex-1 p-2 text-sm border rounded"
-                  />
-                  <input
-                    type="number"
-                    placeholder="단백질(g)"
-                    value={food.newFood.protein}
-                    onChange={(e) =>
-                      food.setNewFood({
-                        ...food.newFood,
-                        protein: e.target.value,
-                      })
-                    }
-                    className="w-20 p-2 text-sm border rounded"
-                  />
-                  <button
-                    onClick={food.addNewFood}
-                    className="px-3 py-2 bg-blue-500 text-white rounded text-sm"
-                  >
-                    <Plus size={16} />
-                  </button>
-                </div>
-
-                <div className="space-y-1 max-h-48 overflow-y-auto">
-                  {food.foodDatabase
-                    .filter((foodItem) => foodItem.user_id === auth.user?.id)
-                    .map((foodItem) => (
-                      <div
-                        key={foodItem.id}
-                        className="flex justify-between items-center text-sm bg-gray-50 p-2 rounded"
-                      >
-                        {food.editingFood === foodItem.id ? (
-                          <div className="flex gap-2 flex-1">
-                            <input
-                              type="text"
-                              defaultValue={foodItem.name}
-                              onKeyDown={(e) => {
-                                if (e.key === "Enter") {
-                                  const target = e.target as HTMLInputElement;
-                                  food.updateFood(foodItem.id, {
-                                    name: target.value,
-                                  });
-                                }
-                              }}
-                              className="flex-1 p-1 text-xs border rounded"
-                            />
-                            <input
-                              type="number"
-                              defaultValue={foodItem.protein}
-                              onKeyDown={(e) => {
-                                if (e.key === "Enter") {
-                                  const target = e.target as HTMLInputElement;
-                                  food.updateFood(foodItem.id, {
-                                    protein: parseFloat(target.value),
-                                  });
-                                }
-                              }}
-                              className="w-16 p-1 text-xs border rounded"
-                            />
-                            <button
-                              onClick={() => food.setEditingFood(null)}
-                              className="text-green-500"
-                            >
-                              <Check size={14} />
-                            </button>
-                          </div>
-                        ) : (
-                          <>
-                            <span>
-                              {foodItem.name} ({foodItem.protein}g)
-                            </span>
-                            <div className="flex gap-1">
-                              <button
-                                onClick={() => food.setEditingFood(foodItem.id)}
-                                className="text-blue-500"
-                              >
-                                <Edit size={14} />
-                              </button>
-                              <button
-                                onClick={() => food.deleteFood(foodItem.id)}
-                                className="text-red-500"
-                              >
-                                <Trash2 size={14} />
-                              </button>
-                            </div>
-                          </>
-                        )}
-                      </div>
-                    ))}
-                </div>
-              </div>
-
-              {/* 중복 데이터 정리 버튼 */}
-              {/* <div className="mb-4 p-3 bg-blue-50 rounded-lg border border-blue-200">
-                <h4 className="font-medium text-blue-800 mb-2">
-                  🧹 데이터 정리
-                </h4>
-                <p className="text-xs text-blue-600 mb-2">
-                  중복된 음식 기록을 정리합니다. (같은 날짜, 같은 식사, 같은
-                  음식)
-                </p>
-                <div className="text-xs text-blue-600 mb-2">
-                  📊 현재 로드된 날짜:{" "}
-                  {Object.keys(dailyRecords.dailyRecords).length}일
-                  <br />
-                  📝 총 기록 수:{" "}
-                  {Object.values(dailyRecords.dailyRecords).reduce(
-                    (total, day) =>
-                      total +
-                      day.breakfast.length +
-                      day.lunch.length +
-                      day.dinner.length,
-                    0
-                  )}
-                  개
-                </div>
+              {/* 닫기 버튼 */}
+              <div className="flex justify-end">
                 <button
-                  onClick={() => dailyRecords.removeDuplicateRecords()}
-                  className="w-full py-2 bg-blue-500 text-white rounded text-sm hover:bg-blue-600"
+                  onClick={() => setShowSettings(false)}
+                  className="px-4 py-2 bg-gray-500 text-white rounded-lg hover:bg-gray-600"
                 >
-                  중복 데이터 정리하기
+                  닫기
                 </button>
-              </div> */}
+              </div>
             </div>
           </div>
         )}

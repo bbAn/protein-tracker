@@ -23,10 +23,41 @@ export const DAY_NAMES = ["일", "월", "화", "수", "목", "금", "토"];
 // 기본 체중
 export const DEFAULT_BODY_WEIGHT = 70;
 
-// 단백질 계산 배수
+// 단백질 목적 타입
+export type ProteinGoal = "general" | "muscle" | "diet";
+
+// 단백질 목적별 배수
+export const PROTEIN_GOALS = {
+  general: {
+    name: "일반인",
+    description: "기본적인 건강 유지",
+    normal: 1.2, // 비운동일
+    workout: 1.8, // 운동일
+    icon: "👤",
+  },
+  muscle: {
+    name: "근비대 목적",
+    description: "근육량 증가가 목표",
+    normal: 1.6, // 비운동일
+    workout: 2.2, // 운동일
+    icon: "💪",
+  },
+  diet: {
+    name: "다이어트",
+    description: "근손실 방지하며 체중 감량",
+    normal: 1.4, // 비운동일
+    workout: 2.0, // 운동일
+    icon: "🔥",
+  },
+} as const;
+
+// 기본 단백질 목적
+export const DEFAULT_PROTEIN_GOAL: ProteinGoal = "muscle";
+
+// 하위 호환성을 위한 기존 PROTEIN_MULTIPLIERS (근비대 목적 기본값)
 export const PROTEIN_MULTIPLIERS = {
-  normal: 1.6,
-  workout: 2.2,
+  normal: PROTEIN_GOALS.muscle.normal,
+  workout: PROTEIN_GOALS.muscle.workout,
 } as const;
 
 // 비밀번호 최소 길이

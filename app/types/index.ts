@@ -1,4 +1,5 @@
 import { User as SupabaseUser } from "@supabase/supabase-js";
+import { ProteinGoal } from "../constants";
 
 export interface MealData {
   id: number;
@@ -32,6 +33,7 @@ export interface UserProfile {
   id: string;
   username?: string;
   body_weight: number;
+  protein_goal?: ProteinGoal; // 단백질 목적 추가
   created_at: string;
 }
 
@@ -50,4 +52,4 @@ export type MealType = "breakfast" | "lunch" | "dinner";
 
 export type AuthMode = "login" | "signup";
 
-export type { SupabaseUser };
+export type { SupabaseUser, ProteinGoal };
