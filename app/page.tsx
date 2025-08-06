@@ -27,7 +27,7 @@ import { generateCalendar, dateKeyToDateString } from "./utils/dateUtils";
 
 // Constants
 import { MEAL_NAMES, DAY_NAMES, PROTEIN_GOALS } from "./constants";
-import { ProteinGoal, MealType } from "./types";
+import { ProteinGoal } from "./types";
 
 const ProteinTracker: React.FC = () => {
   // 상태
@@ -492,6 +492,7 @@ const ProteinTracker: React.FC = () => {
                               },
                             }))
                           }
+                          onKeyDown={(e) => handleDirectInputKeyDown(e, meal)}
                           className="flex-1 p-2 text-sm border rounded-lg focus:ring-2 focus:ring-blue-500"
                         />
                         <button
