@@ -308,7 +308,7 @@ const ProteinTracker: React.FC = () => {
                             {dayTotal.toFixed(0)}g
                           </div>
                           {dayRecord.isWorkoutDay && (
-                            <div className="w-2 h-2 bg-red-500 rounded-full mx-auto"></div>
+                            <div className="w-2 h-2 bg-blue-500 rounded-full mx-auto"></div>
                           )}
                         </div>
                       )}
