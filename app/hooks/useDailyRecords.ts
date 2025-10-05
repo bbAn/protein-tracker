@@ -52,7 +52,8 @@ export const useDailyRecords = (
               breakfast: [],
               lunch: [],
               dinner: [],
-              isWorkoutDay: record.is_workout_day,
+              hasCardio: record.has_cardio || false,
+              hasStrength: record.has_strength || false,
             };
           }
           recordsMap[dateKey][record.meal_type].push({
@@ -70,13 +71,12 @@ export const useDailyRecords = (
             ...dayData.lunch,
             ...dayData.dinner,
           ].length;
-          console.log(`  ${dateKey}: ${totalItems}개 항목`);
+          console.log(
+            `  ${dateKey}: ${totalItems}개 항목, 유산소: ${dayData.hasCardio}, 근력: ${dayData.hasStrength}`
+          );
         });
 
         setDailyRecords(recordsMap);
-
-        // 중복 데이터 정리 (백그라운드)
-        // setTimeout(() => removeDuplicateRecords(userId), 2000);
       }
     } catch (error) {
       console.error("💥 사용자 데이터 로드 실패:", error);
@@ -90,7 +90,8 @@ export const useDailyRecords = (
         breakfast: [],
         lunch: [],
         dinner: [],
-        isWorkoutDay: false,
+        hasCardio: false,
+        hasStrength: false,
       }
     );
   };
@@ -122,6 +123,8 @@ export const useDailyRecords = (
         dbDateString,
         meal,
         food: food.name,
+        hasCardio: currentRecord.hasCardio,
+        hasStrength: currentRecord.hasStrength,
         currentTime: new Date().toLocaleString("ko-KR"),
       });
 
@@ -133,7 +136,8 @@ export const useDailyRecords = (
           meal_type: meal,
           food_name: food.name,
           protein_amount: food.protein,
-          is_workout_day: currentRecord.isWorkoutDay,
+          has_cardio: currentRecord.hasCardio,
+          has_strength: currentRecord.hasStrength,
         })
         .select();
 
@@ -146,7 +150,8 @@ export const useDailyRecords = (
           breakfast: [],
           lunch: [],
           dinner: [],
-          isWorkoutDay: false,
+          hasCardio: false,
+          hasStrength: false,
         };
       }
 
@@ -210,8 +215,8 @@ export const useDailyRecords = (
     }
   };
 
-  // 운동 여부 토글
-  const toggleWorkoutDay = async (selectedDate: string): Promise<boolean> => {
+  // 운동 타입 토글
+  const toggleCardio = async (selectedDate: string): Promise<boolean> => {
     if (!user) return false;
 
     try {
@@ -221,99 +226,79 @@ export const useDailyRecords = (
           breakfast: [],
           lunch: [],
           dinner: [],
-          isWorkoutDay: false,
+          hasCardio: false,
+          hasStrength: false,
         };
       }
 
-      const newWorkoutStatus = !updatedRecords[selectedDate].isWorkoutDay;
-      updatedRecords[selectedDate].isWorkoutDay = newWorkoutStatus;
+      const newCardioStatus = !updatedRecords[selectedDate].hasCardio;
+      updatedRecords[selectedDate].hasCardio = newCardioStatus;
 
       const dbDateString = dateKeyToDateString(selectedDate);
 
       const { error } = await supabase
         .from("daily_records")
-        .update({ is_workout_day: newWorkoutStatus })
+        .update({ has_cardio: newCardioStatus })
         .eq("user_id", user.id)
         .eq("record_date", dbDateString)
         .select();
 
       if (error) {
-        console.error("운동 여부 업데이트 실패:", error);
-        updatedRecords[selectedDate].isWorkoutDay = !newWorkoutStatus;
+        console.error("유산소 업데이트 실패:", error);
+        updatedRecords[selectedDate].hasCardio = !newCardioStatus;
         return false;
       }
 
       setDailyRecords(updatedRecords);
+      console.log("✅ 유산소 변경 성공:", newCardioStatus);
       return true;
     } catch (error) {
-      console.error("❌ 운동 여부 토글 실패:", error);
+      console.error("❌ 유산소 변경 실패:", error);
       return false;
     }
   };
 
-  // 중복 데이터 제거
-  // const removeDuplicateRecords = async (userId?: string): Promise<void> => {
-  //   const targetUserId = userId || user?.id;
-  //   if (!targetUserId) return;
+  const toggleStrength = async (selectedDate: string): Promise<boolean> => {
+    if (!user) return false;
 
-  //   try {
-  //     console.log("🧹 중복 데이터 정리 시작...");
+    try {
+      const updatedRecords = { ...dailyRecords };
+      if (!updatedRecords[selectedDate]) {
+        updatedRecords[selectedDate] = {
+          breakfast: [],
+          lunch: [],
+          dinner: [],
+          hasCardio: false,
+          hasStrength: false,
+        };
+      }
 
-  //     const sevenDaysAgo = new Date();
-  //     sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
-  //     const dateFrom = getKoreanDateString(sevenDaysAgo);
+      const newStrengthStatus = !updatedRecords[selectedDate].hasStrength;
+      updatedRecords[selectedDate].hasStrength = newStrengthStatus;
 
-  //     const { data: allRecords, error } = await supabase
-  //       .from("daily_records")
-  //       .select("*")
-  //       .eq("user_id", targetUserId)
-  //       .gte("record_date", dateFrom)
-  //       .order("created_at", { ascending: true });
+      const dbDateString = dateKeyToDateString(selectedDate);
 
-  //     if (error || !allRecords) {
-  //       console.log("중복 정리 스킵:", error);
-  //       return;
-  //     }
+      const { error } = await supabase
+        .from("daily_records")
+        .update({ has_strength: newStrengthStatus })
+        .eq("user_id", user.id)
+        .eq("record_date", dbDateString)
+        .select();
 
-  //     const seen = new Set<string>();
-  //     const duplicates: number[] = [];
+      if (error) {
+        console.error("근력운동 업데이트 실패:", error);
+        updatedRecords[selectedDate].hasStrength = !newStrengthStatus;
+        return false;
+      }
 
-  //     allRecords.forEach((record) => {
-  //       const key = `${record.record_date}-${record.meal_type}-${record.food_name}-${record.protein_amount}`;
-  //       if (seen.has(key)) {
-  //         duplicates.push(record.id);
-  //         console.log("🔍 중복 발견:", {
-  //           id: record.id,
-  //           date: record.record_date,
-  //           meal: record.meal_type,
-  //           food: record.food_name,
-  //         });
-  //       } else {
-  //         seen.add(key);
-  //       }
-  //     });
-
-  //     if (duplicates.length > 0) {
-  //       console.log(`🗑️ ${duplicates.length}개 중복 데이터 삭제 중...`);
-
-  //       const { error: deleteError } = await supabase
-  //         .from("daily_records")
-  //         .delete()
-  //         .in("id", duplicates);
-
-  //       if (deleteError) {
-  //         console.error("중복 삭제 실패:", deleteError);
-  //       } else {
-  //         console.log("✅ 중복 데이터 정리 완료!");
-  //         await loadDailyRecords(targetUserId);
-  //       }
-  //     } else {
-  //       console.log("✅ 중복 데이터 없음");
-  //     }
-  //   } catch (error) {
-  //     console.error("중복 정리 중 오류:", error);
-  //   }
-  // };
+      setDailyRecords(updatedRecords);
+      console.log("✅ 근력운동 변경 성공:", newStrengthStatus);
+      return true;
+    } catch (error) {
+      console.error("❌ 근력운동 변경 실패:", error);
+      return false;
+    }
+  };
 
   // 직접 입력으로 음식 추가
   const addDirectFoodToMeal = async (
@@ -334,7 +319,8 @@ export const useDailyRecords = (
         meal,
         foodName,
         proteinAmount,
-        currentTime: new Date().toLocaleString("ko-KR"),
+        hasCardio: currentRecord.hasCardio,
+        hasStrength: currentRecord.hasStrength,
       });
 
       const { data, error } = await supabase
@@ -345,7 +331,8 @@ export const useDailyRecords = (
           meal_type: meal,
           food_name: foodName,
           protein_amount: proteinAmount,
-          is_workout_day: currentRecord.isWorkoutDay,
+          has_cardio: currentRecord.hasCardio,
+          has_strength: currentRecord.hasStrength,
         })
         .select();
 
@@ -358,7 +345,8 @@ export const useDailyRecords = (
           breakfast: [],
           lunch: [],
           dinner: [],
-          isWorkoutDay: false,
+          hasCardio: false,
+          hasStrength: false,
         };
       }
 
@@ -392,7 +380,7 @@ export const useDailyRecords = (
     addFoodToMeal,
     addDirectFoodToMeal,
     removeFoodFromMeal,
-    toggleWorkoutDay,
-    // removeDuplicateRecords,
+    toggleCardio,
+    toggleStrength,
   };
 };

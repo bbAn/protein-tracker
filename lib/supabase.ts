@@ -8,9 +8,11 @@ export const supabase = createClient(supabaseUrl, supabaseAnonKey);
 // 타입 정의
 export interface UserProfile {
   id: string;
-  username?: string; // 추가
+  username?: string;
   email: string;
   body_weight: number;
+  gender?: string;
+  protein_goal?: string;
   created_at: string;
 }
 
@@ -30,7 +32,10 @@ export interface DailyRecord {
   meal_type: "breakfast" | "lunch" | "dinner";
   food_name: string;
   protein_amount: number;
-  is_workout_day: boolean;
+  has_cardio: boolean;
+  has_strength: boolean;
+  // 하위 호환성을 위한 옵셔널 필드
+  is_workout_day?: boolean;
   created_at: string;
 }
 
@@ -44,5 +49,6 @@ export interface DayRecord {
   breakfast: MealData[];
   lunch: MealData[];
   dinner: MealData[];
-  isWorkoutDay: boolean;
+  hasCardio: boolean;
+  hasStrength: boolean;
 }

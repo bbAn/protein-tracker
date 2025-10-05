@@ -23,41 +23,54 @@ export const DAY_NAMES = ["일", "월", "화", "수", "목", "금", "토"];
 // 기본 체중
 export const DEFAULT_BODY_WEIGHT = 70;
 
-// 단백질 목적 타입
-export type ProteinGoal = "general" | "muscle" | "diet";
-
-// 단백질 목적별 배수
+// 단백질 섭취 목적별 설정 (성별 구분)
 export const PROTEIN_GOALS = {
-  general: {
-    name: "일반인",
-    description: "기본적인 건강 유지",
-    normal: 1.2, // 비운동일
-    workout: 1.8, // 운동일
-    icon: "👤",
+  male: {
+    diet: {
+      name: "다이어트",
+      icon: "🔥",
+      description: "체중 감량 및 체지방 감소",
+      normal: 1.2,
+      workout: 1.8,
+    },
+    maintain: {
+      name: "체중 유지",
+      icon: "⚖️",
+      description: "현재 체중과 근육량 유지",
+      normal: 1.2,
+      workout: 2.0,
+    },
+    bulk: {
+      name: "벌크업",
+      icon: "💪",
+      description: "근육량 증가 및 체중 증량",
+      normal: 1.6,
+      workout: 2.2,
+    },
   },
-  muscle: {
-    name: "근비대 목적",
-    description: "근육량 증가가 목표",
-    normal: 1.6, // 비운동일
-    workout: 2.2, // 운동일
-    icon: "💪",
+  female: {
+    diet: {
+      name: "다이어트",
+      icon: "🔥",
+      description: "체중 감량 및 체지방 감소",
+      normal: 1.0,
+      workout: 1.6,
+    },
+    maintain: {
+      name: "체중 유지",
+      icon: "⚖️",
+      description: "현재 체중과 근육량 유지",
+      normal: 1.0,
+      workout: 1.8,
+    },
+    bulk: {
+      name: "근육량 증가",
+      icon: "💪",
+      description: "근육량 증가 및 탄탄한 몸매",
+      normal: 1.4,
+      workout: 2.0,
+    },
   },
-  diet: {
-    name: "다이어트",
-    description: "근손실 방지하며 체중 감량",
-    normal: 1.4, // 비운동일
-    workout: 2.0, // 운동일
-    icon: "🔥",
-  },
-} as const;
-
-// 기본 단백질 목적
-export const DEFAULT_PROTEIN_GOAL: ProteinGoal = "muscle";
-
-// 하위 호환성을 위한 기존 PROTEIN_MULTIPLIERS (근비대 목적 기본값)
-export const PROTEIN_MULTIPLIERS = {
-  normal: PROTEIN_GOALS.muscle.normal,
-  workout: PROTEIN_GOALS.muscle.workout,
 } as const;
 
 // 비밀번호 최소 길이

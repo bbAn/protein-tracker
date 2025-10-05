@@ -123,7 +123,10 @@ const ProteinTracker: React.FC = () => {
   // 현재 선택된 날짜의 기록과 통계
   const currentRecord = dailyRecords.getDayRecord(selectedDate);
   const totalProtein = dailyRecords.getTotalProtein(selectedDate);
-  const targetProtein = bodyWeight.getTargetProtein(currentRecord.isWorkoutDay);
+  const targetProtein = bodyWeight.getTargetProtein(
+    currentRecord.hasCardio,
+    currentRecord.hasStrength
+  );
   const progressPercentage = Math.min(
     (totalProtein / targetProtein) * 100,
     100
@@ -275,7 +278,8 @@ const ProteinTracker: React.FC = () => {
                 const dayTotal = dailyRecords.getTotalProtein(dateString);
                 const dayRecord = dailyRecords.getDayRecord(dateString);
                 const dayTarget = bodyWeight.getTargetProtein(
-                  dayRecord.isWorkoutDay
+                  dayRecord.hasCardio,
+                  dayRecord.hasStrength
                 );
                 const isSelected = dateString === selectedDate;
                 const isToday = dateString === new Date().toDateString();
@@ -307,8 +311,15 @@ const ProteinTracker: React.FC = () => {
                           >
                             {dayTotal.toFixed(0)}g
                           </div>
-                          {dayRecord.isWorkoutDay && (
-                            <div className="w-2 h-2 bg-blue-500 rounded-full mx-auto"></div>
+                          {(dayRecord.hasCardio || dayRecord.hasStrength) && (
+                            <div className="flex gap-0.5 justify-center">
+                              {dayRecord.hasCardio && (
+                                <div className="w-1.5 h-1.5 bg-blue-500 rounded-full"></div>
+                              )}
+                              {dayRecord.hasStrength && (
+                                <div className="w-1.5 h-1.5 bg-green-500 rounded-full"></div>
+                              )}
+                            </div>
                           )}
                         </div>
                       )}
@@ -326,16 +337,28 @@ const ProteinTracker: React.FC = () => {
                 {new Date(selectedDate).getMonth() + 1}/
                 {new Date(selectedDate).getDate()} 기록
               </h3>
-              <label className="flex items-center gap-2">
-                <input
-                  type="checkbox"
-                  checked={currentRecord.isWorkoutDay}
-                  onChange={() => dailyRecords.toggleWorkoutDay(selectedDate)}
-                  className="w-4 h-4"
-                />
-                <span className="text-sm">운동한 날</span>
-              </label>
+              <div className="flex gap-3">
+                <label className="flex items-center gap-2 cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={currentRecord.hasCardio}
+                    onChange={() => dailyRecords.toggleCardio(selectedDate)}
+                    className="w-4 h-4 accent-blue-500"
+                  />
+                  <span className="text-sm">유산소</span>
+                </label>
+                <label className="flex items-center gap-2 cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={currentRecord.hasStrength}
+                    onChange={() => dailyRecords.toggleStrength(selectedDate)}
+                    className="w-4 h-4 accent-red-500"
+                  />
+                  <span className="text-sm">근력운동</span>
+                </label>
+              </div>
             </div>
+
             {/* 진행률 */}
             <div className="mb-6">
               <div className="flex justify-between text-sm mb-2">
@@ -381,7 +404,12 @@ const ProteinTracker: React.FC = () => {
                   개
                 </div>
                 <div>
-                  💪 운동한 날: {currentRecord.isWorkoutDay ? "✅" : "❌"}
+                  💪 운동:
+                  {currentRecord.hasCardio && " 유산소"}
+                  {currentRecord.hasStrength && " 근력"}
+                  {!currentRecord.hasCardio &&
+                    !currentRecord.hasStrength &&
+                    " 없음"}
                 </div>
               </div>
             </div>
@@ -524,7 +552,7 @@ const ProteinTracker: React.FC = () => {
                     >
                       <option value="">음식 추가...</option>
                       {food.foodDatabase
-                        .sort((a, b) => a.name.localeCompare(b.name)) // 오름차순 정렬 추가
+                        .sort((a, b) => a.name.localeCompare(b.name)) // 오름차순 정렬
                         .map((foodItem) => (
                           <option key={foodItem.id} value={foodItem.id}>
                             {foodItem.name} ({foodItem.protein}g)
@@ -552,45 +580,76 @@ const ProteinTracker: React.FC = () => {
                 </button>
               </div>
 
+              {/* 성별 선택 */}
+              <div className="mb-6">
+                <label className="block text-sm font-medium mb-3">성별</label>
+                <div className="flex gap-3">
+                  <button
+                    onClick={() => bodyWeight.updateGender("male")}
+                    className={`flex-1 p-3 rounded-lg border-2 transition-all ${
+                      bodyWeight.gender === "male"
+                        ? "border-blue-500 bg-blue-50 text-blue-700"
+                        : "border-gray-200 hover:border-gray-300"
+                    }`}
+                  >
+                    <div className="text-2xl mb-1">👨</div>
+                    <div className="font-medium">남자</div>
+                  </button>
+                  <button
+                    onClick={() => bodyWeight.updateGender("female")}
+                    className={`flex-1 p-3 rounded-lg border-2 transition-all ${
+                      bodyWeight.gender === "female"
+                        ? "border-pink-500 bg-pink-50 text-pink-700"
+                        : "border-gray-200 hover:border-gray-300"
+                    }`}
+                  >
+                    <div className="text-2xl mb-1">👩</div>
+                    <div className="font-medium">여자</div>
+                  </button>
+                </div>
+              </div>
+
               {/* 단백질 목적 설정 */}
               <div className="mb-6">
                 <label className="block text-sm font-medium mb-3">
                   단백질 섭취 목적
                 </label>
                 <div className="space-y-3">
-                  {Object.entries(PROTEIN_GOALS).map(([key, goal]) => (
-                    <div
-                      key={key}
-                      className={`p-3 rounded-lg border-2 cursor-pointer transition-all ${
-                        bodyWeight.proteinGoal === key
-                          ? "border-blue-500 bg-blue-50"
-                          : "border-gray-200 hover:border-gray-300"
-                      }`}
-                      onClick={() =>
-                        bodyWeight.updateProteinGoal(key as ProteinGoal)
-                      }
-                    >
-                      <div className="flex items-center justify-between">
-                        <div className="flex items-center gap-2">
-                          <span className="text-lg">{goal.icon}</span>
-                          <div>
-                            <div className="font-medium">{goal.name}</div>
-                            <div className="text-xs text-gray-600">
-                              {goal.description}
+                  {Object.entries(PROTEIN_GOALS[bodyWeight.gender]).map(
+                    ([key, goal]) => (
+                      <div
+                        key={key}
+                        className={`p-3 rounded-lg border-2 cursor-pointer transition-all ${
+                          bodyWeight.proteinGoal === key
+                            ? "border-blue-500 bg-blue-50"
+                            : "border-gray-200 hover:border-gray-300"
+                        }`}
+                        onClick={() =>
+                          bodyWeight.updateProteinGoal(key as ProteinGoal)
+                        }
+                      >
+                        <div className="flex items-center justify-between">
+                          <div className="flex items-center gap-2">
+                            <span className="text-lg">{goal.icon}</span>
+                            <div>
+                              <div className="font-medium">{goal.name}</div>
+                              <div className="text-xs text-gray-600">
+                                {goal.description}
+                              </div>
+                            </div>
+                          </div>
+                          <div className="text-right">
+                            <div className="text-xs text-gray-500">
+                              일반: {goal.normal}g/kg
+                            </div>
+                            <div className="text-xs text-gray-500">
+                              근력: {goal.workout}g/kg
                             </div>
                           </div>
                         </div>
-                        <div className="text-right">
-                          <div className="text-xs text-gray-500">
-                            일반: {goal.normal}g/kg
-                          </div>
-                          <div className="text-xs text-gray-500">
-                            운동: {goal.workout}g/kg
-                          </div>
-                        </div>
                       </div>
-                    </div>
-                  ))}
+                    )
+                  )}
                 </div>
               </div>
 
@@ -636,7 +695,7 @@ const ProteinTracker: React.FC = () => {
                       </strong>
                     </span>
                     <span className="text-gray-600">
-                      운동:{" "}
+                      근력:{" "}
                       <strong>
                         {(
                           bodyWeight.bodyWeight *

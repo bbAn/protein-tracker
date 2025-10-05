@@ -1,5 +1,4 @@
 import { User as SupabaseUser } from "@supabase/supabase-js";
-import { ProteinGoal } from "../constants";
 
 export interface MealData {
   id: number;
@@ -11,7 +10,8 @@ export interface DayRecord {
   breakfast: MealData[];
   lunch: MealData[];
   dinner: MealData[];
-  isWorkoutDay: boolean;
+  hasCardio: boolean;
+  hasStrength: boolean;
 }
 
 export interface CalcResult {
@@ -33,7 +33,8 @@ export interface UserProfile {
   id: string;
   username?: string;
   body_weight: number;
-  protein_goal?: ProteinGoal; // 단백질 목적 추가
+  gender?: string;
+  protein_goal?: string;
   created_at: string;
 }
 
@@ -44,7 +45,10 @@ export interface DailyRecord {
   meal_type: "breakfast" | "lunch" | "dinner";
   food_name: string;
   protein_amount: number;
-  is_workout_day: boolean;
+  has_cardio: boolean;
+  has_strength: boolean;
+  // 하위 호환성을 위한 옵셔널 필드
+  is_workout_day?: boolean;
   created_at: string;
 }
 
@@ -52,4 +56,8 @@ export type MealType = "breakfast" | "lunch" | "dinner";
 
 export type AuthMode = "login" | "signup";
 
-export type { SupabaseUser, ProteinGoal };
+export type ProteinGoal = "diet" | "maintain" | "bulk";
+
+export type Gender = "male" | "female";
+
+export type { SupabaseUser };
