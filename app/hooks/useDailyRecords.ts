@@ -20,80 +20,116 @@ export const useDailyRecords = (
   const [dailyRecords, setDailyRecords] = useState<Record<string, DayRecord>>(
     {}
   );
+  const [userProfileId, setUserProfileId] = useState<string | null>(null);
+
+  // user_profiles의 id 가져오기 (daily_records의 user_id로 사용)
+  const getUserProfileId = useCallback(
+    async (authUserId: string): Promise<string | null> => {
+      if (userProfileId) return userProfileId;
+
+      try {
+        const { data: profile } = await supabase
+          .from("user_profiles")
+          .select("id")
+          .eq("auth_id", authUserId)
+          .single();
+
+        if (profile) {
+          setUserProfileId(profile.id);
+          return profile.id;
+        }
+      } catch (error) {
+        console.error("Error getting user profile id:", error);
+      }
+      return null;
+    },
+    [userProfileId]
+  );
 
   // 일일 기록 로드
-  const loadDailyRecords = useCallback(async (userId: string) => {
-    try {
-      const thirtyDaysAgo = new Date();
-      thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
-      const koreanDateFrom = getKoreanDateString(thirtyDaysAgo);
+  const loadDailyRecords = useCallback(
+    async (authUserId: string) => {
+      try {
+        // user_profiles의 id 가져오기
+        const profileId = await getUserProfileId(authUserId);
+        if (!profileId) {
+          console.error("User profile not found");
+          return;
+        }
 
-      console.log("📅 기록 조회 기간:", { from: koreanDateFrom, userId });
+        const thirtyDaysAgo = new Date();
+        thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+        const koreanDateFrom = getKoreanDateString(thirtyDaysAgo);
 
-      const { data: records, error: recordsError } = await supabase
-        .from("daily_records")
-        .select("*")
-        .eq("user_id", userId)
-        .gte("record_date", koreanDateFrom)
-        .order("record_date", { ascending: false });
+        console.log("📅 기록 조회 기간:", {
+          from: koreanDateFrom,
+          profileId,
+        });
 
-      console.log("📊 기록 조회 결과:", {
-        records: records?.length,
-        recordsError,
-      });
+        const { data: records, error: recordsError } = await supabase
+          .from("daily_records")
+          .select("*")
+          .eq("user_id", profileId)
+          .gte("record_date", koreanDateFrom)
+          .order("record_date", { ascending: false });
 
-      if (records) {
-        const recordsMap: Record<string, DayRecord> = {};
-        records.forEach((record: DailyRecord) => {
-          const dateKey = dateStringToDateKey(record.record_date);
+        console.log("📊 기록 조회 결과:", {
+          records: records?.length,
+          recordsError,
+        });
 
-          if (!recordsMap[dateKey]) {
-            recordsMap[dateKey] = {
-              breakfast: [],
-              lunch: [],
-              dinner: [],
-              hasCardio: record.has_cardio || false,
-              hasStrength: record.has_strength || false,
-            };
-          }
-          recordsMap[dateKey][record.meal_type].push({
-            id: record.id,
-            name: record.food_name,
-            protein: record.protein_amount,
+        if (records) {
+          const recordsMap: Record<string, DayRecord> = {};
+          records.forEach((record: DailyRecord) => {
+            const dateKey = dateStringToDateKey(record.record_date);
+
+            if (!recordsMap[dateKey]) {
+              recordsMap[dateKey] = {
+                breakfast: [],
+                lunch: [],
+                dinner: [],
+                isWorkoutDay: record.is_workout_day || false,
+                hasCardio: false,
+                hasStrength: false,
+              };
+            }
+            recordsMap[dateKey][record.meal_type].push({
+              id: record.id,
+              name: record.food_name,
+              protein: record.protein_amount,
+            });
           });
-        });
 
-        console.log("📊 로드된 날짜별 기록:");
-        Object.keys(recordsMap).forEach((dateKey) => {
-          const dayData = recordsMap[dateKey];
-          const totalItems = [
-            ...dayData.breakfast,
-            ...dayData.lunch,
-            ...dayData.dinner,
-          ].length;
-          console.log(
-            `  ${dateKey}: ${totalItems}개 항목, 유산소: ${dayData.hasCardio}, 근력: ${dayData.hasStrength}`
-          );
-        });
+          console.log("📊 로드된 날짜별 기록:");
+          Object.keys(recordsMap).forEach((dateKey) => {
+            const dayData = recordsMap[dateKey];
+            const totalItems = [
+              ...dayData.breakfast,
+              ...dayData.lunch,
+              ...dayData.dinner,
+            ].length;
+            console.log(`  ${dateKey}: ${totalItems}개 항목`);
+          });
 
-        setDailyRecords(recordsMap);
+          setDailyRecords(recordsMap);
+        }
+      } catch (error) {
+        console.error("💥 사용자 데이터 로드 실패:", error);
       }
-    } catch (error) {
-      console.error("💥 사용자 데이터 로드 실패:", error);
-    }
-  }, []);
+    },
+    [getUserProfileId]
+  );
 
   // 특정 날짜의 기록 가져오기
   const getDayRecord = (dateString: string): DayRecord => {
-    return (
-      dailyRecords[dateString] || {
-        breakfast: [],
-        lunch: [],
-        dinner: [],
-        hasCardio: false,
-        hasStrength: false,
-      }
-    );
+    return dailyRecords[dateString] || {
+      breakfast: [],
+      lunch: [],
+      dinner: [],
+      isWorkoutDay: false,
+      hasCardio: false,
+      hasStrength: false,
+    };
   };
 
   // 특정 날짜의 총 단백질량 계산
@@ -115,6 +151,13 @@ export const useDailyRecords = (
     if (!food || !user) return false;
 
     try {
+      // user_profiles의 id 가져오기
+      const profileId = await getUserProfileId(user.id);
+      if (!profileId) {
+        console.error("User profile not found");
+        return false;
+      }
+
       const currentRecord = getDayRecord(selectedDate);
       const dbDateString = dateKeyToDateString(selectedDate);
 
@@ -123,21 +166,18 @@ export const useDailyRecords = (
         dbDateString,
         meal,
         food: food.name,
-        hasCardio: currentRecord.hasCardio,
-        hasStrength: currentRecord.hasStrength,
-        currentTime: new Date().toLocaleString("ko-KR"),
+        profileId,
       });
 
       const { data, error } = await supabase
         .from("daily_records")
         .insert({
-          user_id: user.id,
+          user_id: profileId,
           record_date: dbDateString,
           meal_type: meal,
           food_name: food.name,
           protein_amount: food.protein,
-          has_cardio: currentRecord.hasCardio,
-          has_strength: currentRecord.hasStrength,
+          is_workout_day: currentRecord.isWorkoutDay,
         })
         .select();
 
@@ -150,6 +190,7 @@ export const useDailyRecords = (
           breakfast: [],
           lunch: [],
           dinner: [],
+          isWorkoutDay: false,
           hasCardio: false,
           hasStrength: false,
         };
@@ -172,6 +213,68 @@ export const useDailyRecords = (
     }
   };
 
+  // 직접 음식 추가 (음식명과 단백질량으로)
+  const addDirectFoodToMeal = async (
+    meal: MealType,
+    foodName: string,
+    proteinAmount: number,
+    selectedDate: string
+  ): Promise<boolean> => {
+    if (!user || !foodName || proteinAmount <= 0) return false;
+
+    try {
+      // user_profiles의 id 가져오기
+      const profileId = await getUserProfileId(user.id);
+      if (!profileId) {
+        console.error("User profile not found");
+        return false;
+      }
+
+      const currentRecord = getDayRecord(selectedDate);
+      const dbDateString = dateKeyToDateString(selectedDate);
+
+      const { data, error } = await supabase
+        .from("daily_records")
+        .insert({
+          user_id: profileId,
+          record_date: dbDateString,
+          meal_type: meal,
+          food_name: foodName,
+          protein_amount: proteinAmount,
+          is_workout_day: currentRecord.isWorkoutDay,
+        })
+        .select();
+
+      if (error) throw error;
+
+      // 로컬 상태 업데이트
+      const updatedRecords = { ...dailyRecords };
+      if (!updatedRecords[selectedDate]) {
+        updatedRecords[selectedDate] = {
+          breakfast: [],
+          lunch: [],
+          dinner: [],
+          isWorkoutDay: false,
+          hasCardio: false,
+          hasStrength: false,
+        };
+      }
+
+      const newRecord = data[0];
+      updatedRecords[selectedDate][meal].push({
+        id: newRecord.id,
+        name: foodName,
+        protein: proteinAmount,
+      });
+
+      setDailyRecords(updatedRecords);
+      return true;
+    } catch (error) {
+      console.error("❌ 직접 음식 추가 실패:", error);
+      return false;
+    }
+  };
+
   // 음식 삭제
   const removeFoodFromMeal = async (
     meal: MealType,
@@ -185,7 +288,6 @@ export const useDailyRecords = (
         .from("daily_records")
         .delete()
         .eq("id", foodId)
-        .eq("user_id", user.id)
         .select();
 
       if (error) {
@@ -215,156 +317,88 @@ export const useDailyRecords = (
     }
   };
 
-  // 운동 타입 토글
-  const toggleCardio = async (selectedDate: string): Promise<boolean> => {
+  // 운동 여부 토글
+  const toggleWorkoutDay = async (selectedDate: string): Promise<boolean> => {
     if (!user) return false;
 
     try {
+      // user_profiles의 id 가져오기
+      const profileId = await getUserProfileId(user.id);
+      if (!profileId) {
+        console.error("User profile not found");
+        return false;
+      }
+
       const updatedRecords = { ...dailyRecords };
       if (!updatedRecords[selectedDate]) {
         updatedRecords[selectedDate] = {
           breakfast: [],
           lunch: [],
           dinner: [],
+          isWorkoutDay: false,
           hasCardio: false,
           hasStrength: false,
         };
       }
 
-      const newCardioStatus = !updatedRecords[selectedDate].hasCardio;
-      updatedRecords[selectedDate].hasCardio = newCardioStatus;
+      const newWorkoutStatus = !updatedRecords[selectedDate].isWorkoutDay;
+      updatedRecords[selectedDate].isWorkoutDay = newWorkoutStatus;
 
       const dbDateString = dateKeyToDateString(selectedDate);
 
       const { error } = await supabase
         .from("daily_records")
-        .update({ has_cardio: newCardioStatus })
-        .eq("user_id", user.id)
+        .update({ is_workout_day: newWorkoutStatus })
+        .eq("user_id", profileId)
         .eq("record_date", dbDateString)
         .select();
 
       if (error) {
-        console.error("유산소 업데이트 실패:", error);
-        updatedRecords[selectedDate].hasCardio = !newCardioStatus;
+        console.error("운동 여부 업데이트 실패:", error);
+        updatedRecords[selectedDate].isWorkoutDay = !newWorkoutStatus;
         return false;
       }
 
       setDailyRecords(updatedRecords);
-      console.log("✅ 유산소 변경 성공:", newCardioStatus);
       return true;
     } catch (error) {
-      console.error("❌ 유산소 변경 실패:", error);
+      console.error("❌ 운동 여부 토글 실패:", error);
       return false;
     }
   };
 
-  const toggleStrength = async (selectedDate: string): Promise<boolean> => {
-    if (!user) return false;
-
-    try {
-      const updatedRecords = { ...dailyRecords };
-      if (!updatedRecords[selectedDate]) {
-        updatedRecords[selectedDate] = {
-          breakfast: [],
-          lunch: [],
-          dinner: [],
-          hasCardio: false,
-          hasStrength: false,
-        };
-      }
-
-      const newStrengthStatus = !updatedRecords[selectedDate].hasStrength;
-      updatedRecords[selectedDate].hasStrength = newStrengthStatus;
-
-      const dbDateString = dateKeyToDateString(selectedDate);
-
-      const { error } = await supabase
-        .from("daily_records")
-        .update({ has_strength: newStrengthStatus })
-        .eq("user_id", user.id)
-        .eq("record_date", dbDateString)
-        .select();
-
-      if (error) {
-        console.error("근력운동 업데이트 실패:", error);
-        updatedRecords[selectedDate].hasStrength = !newStrengthStatus;
-        return false;
-      }
-
-      setDailyRecords(updatedRecords);
-      console.log("✅ 근력운동 변경 성공:", newStrengthStatus);
-      return true;
-    } catch (error) {
-      console.error("❌ 근력운동 변경 실패:", error);
-      return false;
+  // 유산소 운동 토글
+  const toggleCardio = (selectedDate: string): void => {
+    const updatedRecords = { ...dailyRecords };
+    if (!updatedRecords[selectedDate]) {
+      updatedRecords[selectedDate] = {
+        breakfast: [],
+        lunch: [],
+        dinner: [],
+        isWorkoutDay: false,
+        hasCardio: false,
+        hasStrength: false,
+      };
     }
+    updatedRecords[selectedDate].hasCardio = !updatedRecords[selectedDate].hasCardio;
+    setDailyRecords(updatedRecords);
   };
 
-  // 직접 입력으로 음식 추가
-  const addDirectFoodToMeal = async (
-    meal: MealType,
-    foodName: string,
-    proteinAmount: number,
-    selectedDate: string
-  ): Promise<boolean> => {
-    if (!user) return false;
-
-    try {
-      const currentRecord = getDayRecord(selectedDate);
-      const dbDateString = dateKeyToDateString(selectedDate);
-
-      console.log("🍽️ 직접 입력 음식 추가:", {
-        selectedDate,
-        dbDateString,
-        meal,
-        foodName,
-        proteinAmount,
-        hasCardio: currentRecord.hasCardio,
-        hasStrength: currentRecord.hasStrength,
-      });
-
-      const { data, error } = await supabase
-        .from("daily_records")
-        .insert({
-          user_id: user.id,
-          record_date: dbDateString,
-          meal_type: meal,
-          food_name: foodName,
-          protein_amount: proteinAmount,
-          has_cardio: currentRecord.hasCardio,
-          has_strength: currentRecord.hasStrength,
-        })
-        .select();
-
-      if (error) throw error;
-
-      // 로컬 상태 업데이트
-      const updatedRecords = { ...dailyRecords };
-      if (!updatedRecords[selectedDate]) {
-        updatedRecords[selectedDate] = {
-          breakfast: [],
-          lunch: [],
-          dinner: [],
-          hasCardio: false,
-          hasStrength: false,
-        };
-      }
-
-      const newRecord = data[0];
-      updatedRecords[selectedDate][meal].push({
-        id: newRecord.id,
-        name: foodName,
-        protein: proteinAmount,
-      });
-
-      setDailyRecords(updatedRecords);
-      console.log("✅ 직접 입력 음식 추가 성공!");
-      return true;
-    } catch (error) {
-      console.error("❌ 직접 입력 음식 추가 실패:", error);
-      alert("음식 추가 중 오류가 발생했습니다.");
-      return false;
+  // 근력 운동 토글
+  const toggleStrength = (selectedDate: string): void => {
+    const updatedRecords = { ...dailyRecords };
+    if (!updatedRecords[selectedDate]) {
+      updatedRecords[selectedDate] = {
+        breakfast: [],
+        lunch: [],
+        dinner: [],
+        isWorkoutDay: false,
+        hasCardio: false,
+        hasStrength: false,
+      };
     }
+    updatedRecords[selectedDate].hasStrength = !updatedRecords[selectedDate].hasStrength;
+    setDailyRecords(updatedRecords);
   };
 
   return {
@@ -380,6 +414,7 @@ export const useDailyRecords = (
     addFoodToMeal,
     addDirectFoodToMeal,
     removeFoodFromMeal,
+    toggleWorkoutDay,
     toggleCardio,
     toggleStrength,
   };

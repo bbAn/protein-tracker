@@ -10,6 +10,7 @@ export interface DayRecord {
   breakfast: MealData[];
   lunch: MealData[];
   dinner: MealData[];
+  isWorkoutDay: boolean;
   hasCardio: boolean;
   hasStrength: boolean;
 }
@@ -33,8 +34,6 @@ export interface UserProfile {
   id: string;
   username?: string;
   body_weight: number;
-  gender?: string;
-  protein_goal?: string;
   created_at: string;
 }
 
@@ -45,10 +44,7 @@ export interface DailyRecord {
   meal_type: "breakfast" | "lunch" | "dinner";
   food_name: string;
   protein_amount: number;
-  has_cardio: boolean;
-  has_strength: boolean;
-  // 하위 호환성을 위한 옵셔널 필드
-  is_workout_day?: boolean;
+  is_workout_day: boolean;
   created_at: string;
 }
 

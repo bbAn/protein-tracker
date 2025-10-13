@@ -7,7 +7,6 @@ import {
   USERNAME_REGEX,
 } from "../constants";
 
-// User 인터페이스 정의 (AuthForm과 일관성 유지)
 interface User {
   id: string;
   username: string;
@@ -25,38 +24,66 @@ export const useAuth = () => {
   const [confirmPassword, setConfirmPassword] = useState<string>("");
   const [authMode, setAuthMode] = useState<AuthMode>("login");
 
-  // 비밀번호 해싱
-  const hashPassword = async (password: string): Promise<string> => {
-    const encoder = new TextEncoder();
-    const data = encoder.encode(password + "protein_salt_2024");
-    const hashBuffer = await crypto.subtle.digest("SHA-256", data);
-    const hashArray = Array.from(new Uint8Array(hashBuffer));
-    return hashArray.map((b) => b.toString(16).padStart(2, "0")).join("");
-  };
-
-  // 초기 사용자 체크
+  // 초기 사용자 체크 - Supabase Auth 세션 사용
   useEffect(() => {
-    const checkUser = async (): Promise<User | null> => {
+    const checkUser = async (): Promise<void> => {
       try {
-        const savedUser = sessionStorage.getItem("protein_user");
-        if (savedUser) {
-          const userData = JSON.parse(savedUser);
-          setUser({ id: userData.id } as SupabaseUser);
-          setUserDisplayName(userData.username);
-          return userData;
+        // Supabase 세션 확인
+        const {
+          data: { session },
+        } = await supabase.auth.getSession();
+
+        if (session?.user) {
+          setUser(session.user);
+
+          // user_profiles에서 username 가져오기
+          const { data: profile } = await supabase
+            .from("user_profiles")
+            .select("username")
+            .eq("auth_id", session.user.id)
+            .single();
+
+          if (profile?.username) {
+            setUserDisplayName(profile.username);
+          }
         }
       } catch (error) {
         console.error("Error checking user:", error);
       } finally {
         setLoading(false);
       }
-      return null;
     };
 
     checkUser();
+
+    // 인증 상태 변경 리스너
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange(async (_event, session) => {
+      setUser(session?.user ?? null);
+
+      if (session?.user) {
+        // username 가져오기
+        const { data: profile } = await supabase
+          .from("user_profiles")
+          .select("username")
+          .eq("auth_id", session.user.id)
+          .single();
+
+        if (profile?.username) {
+          setUserDisplayName(profile.username);
+        }
+      } else {
+        setUserDisplayName("");
+      }
+    });
+
+    return () => {
+      subscription.unsubscribe();
+    };
   }, []);
 
-  // 로그인
+  // 로그인 - Supabase Auth 사용
   const handleLogin = async (): Promise<{ success: boolean; user?: User }> => {
     if (!username || !password) {
       alert("아이디와 비밀번호를 입력해주세요.");
@@ -64,48 +91,48 @@ export const useAuth = () => {
     }
 
     try {
-      const hashedPassword = await hashPassword(password);
+      // username을 email 형식으로 변환 (Supabase는 email 기반 인증만 지원)
+      const email = `${username.toLowerCase()}@protein.app`;
 
-      const { data: loginResult, error } = await supabase.rpc("login_user", {
-        p_username: username.toLowerCase(),
-        p_password_hash: hashedPassword,
+      const { data, error } = await supabase.auth.signInWithPassword({
+        email,
+        password,
       });
 
       if (error) {
         console.error("Login error:", error);
-        alert("로그인 중 오류가 발생했습니다.");
-        return { success: false };
-      }
-
-      if (!loginResult || loginResult.length === 0) {
-        const { data: userCheck } = await supabase
-          .from("user_profiles")
-          .select("username")
-          .eq("username", username.toLowerCase());
-
-        if (!userCheck || userCheck.length === 0) {
-          alert("존재하지 않는 아이디입니다.");
+        if (error.message.includes("Invalid login credentials")) {
+          alert("아이디 또는 비밀번호가 잘못되었습니다.");
         } else {
-          alert("비밀번호가 잘못되었습니다.");
+          alert("로그인 중 오류가 발생했습니다.");
         }
         return { success: false };
       }
 
-      // 로그인 성공
-      const userData = loginResult[0];
-      const userInfo: User = {
-        id: userData.user_id,
-        username: userData.username,
-      };
+      if (data.user) {
+        // user_profiles에서 username과 id 가져오기
+        const { data: profile } = await supabase
+          .from("user_profiles")
+          .select("id, username")
+          .eq("auth_id", data.user.id)
+          .single();
 
-      sessionStorage.setItem("protein_user", JSON.stringify(userInfo));
-      setUser({ id: userData.user_id } as SupabaseUser);
-      setUserDisplayName(userData.username);
+        if (profile) {
+          const userInfo: User = {
+            id: profile.id,
+            username: profile.username,
+          };
 
-      setUsername("");
-      setPassword("");
+          setUser(data.user);
+          setUserDisplayName(profile.username);
+          setUsername("");
+          setPassword("");
 
-      return { success: true, user: userInfo };
+          return { success: true, user: userInfo };
+        }
+      }
+
+      return { success: false };
     } catch (error) {
       console.error("Login catch error:", error);
       alert("로그인 중 오류가 발생했습니다.");
@@ -113,7 +140,7 @@ export const useAuth = () => {
     }
   };
 
-  // 회원가입
+  // 회원가입 - Supabase Auth 사용
   const handleSignup = async (): Promise<boolean> => {
     if (!username || !password || !confirmPassword) {
       alert("모든 필드를 입력해주세요.");
@@ -141,16 +168,36 @@ export const useAuth = () => {
     }
 
     try {
-      const hashedPassword = await hashPassword(password);
+      // 1. username 중복 확인
+      const { data: existingUser } = await supabase
+        .from("user_profiles")
+        .select("username")
+        .eq("username", username.toLowerCase())
+        .single();
 
-      const { error } = await supabase.rpc("signup_user", {
-        p_username: username.toLowerCase(),
-        p_password_hash: hashedPassword,
-        p_body_weight: 70,
+      if (existingUser) {
+        alert("이미 사용 중인 아이디입니다.");
+        return false;
+      }
+
+      // 2. Supabase Auth로 회원가입
+      const email = `${username.toLowerCase()}@protein.app`;
+
+      const { error } = await supabase.auth.signUp({
+        email,
+        password,
+        options: {
+          data: {
+            username: username.toLowerCase(),
+          },
+          // 이메일 확인 건너뛰기 (개발용)
+          emailRedirectTo: undefined,
+        },
       });
 
       if (error) {
-        if (error.message.includes("Username already exists")) {
+        console.error("Signup error:", error);
+        if (error.message.includes("already registered")) {
           alert("이미 사용 중인 아이디입니다.");
         } else {
           alert("회원가입 실패: " + error.message);
@@ -171,9 +218,9 @@ export const useAuth = () => {
     }
   };
 
-  // 로그아웃
+  // 로그아웃 - Supabase Auth 사용
   const handleLogout = async (): Promise<void> => {
-    sessionStorage.removeItem("protein_user");
+    await supabase.auth.signOut();
     setUser(null);
     setUserDisplayName("");
   };

@@ -1,7 +1,7 @@
 import { useCallback, useState } from "react";
 import { supabase } from "../../lib/supabase";
-import { SupabaseUser, ProteinGoal, Gender } from "../types";
 import { DEFAULT_BODY_WEIGHT, PROTEIN_GOALS } from "../constants";
+import { Gender, ProteinGoal, SupabaseUser } from "../types";
 
 export const useBodyWeight = (user: SupabaseUser | null) => {
   const [bodyWeight, setBodyWeight] = useState<number>(DEFAULT_BODY_WEIGHT);
@@ -11,32 +11,33 @@ export const useBodyWeight = (user: SupabaseUser | null) => {
   const [proteinGoal, setProteinGoal] = useState<ProteinGoal>("maintain");
   const [gender, setGender] = useState<Gender>("male");
 
-  // 사용자 프로필 로드
+  // 사용자 프로필 로드 - auth_id 기반
   const loadUserProfile = useCallback(async (userId: string) => {
     try {
-      const { data: profile, error: profileError } = await supabase.rpc(
-        "get_user_profile",
-        {
-          p_user_id: userId,
-        }
-      );
+      console.log("👤 프로필 조회 시작:", userId);
+
+      const { data: profile, error: profileError } = await supabase
+        .from("user_profiles")
+        .select("*")
+        .eq("auth_id", userId)
+        .single();
 
       console.log("👤 프로필 조회 결과:", { profile, profileError });
 
       if (profileError) {
         console.error("프로필 로드 에러:", profileError);
-      } else if (profile && profile.length > 0) {
-        const userProfile = profile[0];
-        const weight = userProfile.body_weight || DEFAULT_BODY_WEIGHT;
+      } else if (profile) {
+        const weight = profile.body_weight || DEFAULT_BODY_WEIGHT;
 
-        // "general" → "maintain" 변환
-        let userGoal = userProfile.protein_goal as ProteinGoal;
-        if (!userGoal || userGoal === ("general" as unknown as ProteinGoal)) {
+        // 기본값 및 호환성 처리
+        let userGoal = profile.protein_goal as ProteinGoal;
+        if (!userGoal || !["diet", "maintain", "bulk"].includes(userGoal)) {
+          // "general", "cut", "build" 같은 이전 값들을 "maintain"으로 변환
           userGoal = "maintain";
         }
 
         // gender 기본값
-        let userGender = (userProfile.gender as Gender) || "male";
+        let userGender = (profile.gender as Gender) || "male";
         if (userGender !== "male" && userGender !== "female") {
           userGender = "male";
         }
@@ -56,19 +57,19 @@ export const useBodyWeight = (user: SupabaseUser | null) => {
     }
   }, []);
 
-  // 체중 업데이트
+  // 체중 업데이트 - auth_id 기반
   const updateBodyWeight = async (newWeight: number): Promise<boolean> => {
     if (!user || newWeight <= 0) return false;
 
     console.log("💪 체중 업데이트 시작:", { userId: user.id, newWeight });
 
     try {
-      const { data, error } = await supabase.rpc("update_user_weight", {
-        p_user_id: user.id,
-        p_new_weight: newWeight,
-      });
+      const { error } = await supabase
+        .from("user_profiles")
+        .update({ body_weight: newWeight })
+        .eq("auth_id", user.id);
 
-      console.log("📝 체중 업데이트 결과:", { data, error });
+      console.log("📝 체중 업데이트 결과:", { error });
 
       if (error) throw error;
 
@@ -125,42 +126,60 @@ export const useBodyWeight = (user: SupabaseUser | null) => {
 
   // 성별 업데이트
   const updateGender = async (newGender: Gender): Promise<boolean> => {
+    console.log("👤 성별 업데이트 시작:", newGender);
+
+    // 로컬 상태는 즉시 업데이트
+    setGender(newGender);
+
     if (!user) {
-      setGender(newGender);
       return true;
     }
 
     try {
-      // 로컬 상태는 즉시 업데이트
-      setGender(newGender);
+      const { error } = await supabase
+        .from("user_profiles")
+        .update({ gender: newGender })
+        .eq("auth_id", user.id);
 
-      // DB 업데이트는 선택적 (테이블 구조 확인 필요)
-      // TODO: 나중에 DB 저장 추가
-      console.log("✅ 성별 업데이트 성공 (로컬):", newGender);
+      console.log("📝 성별 업데이트 결과:", { error });
+
+      if (error) throw error;
+
+      console.log("✅ 성별 업데이트 성공:", newGender);
       return true;
     } catch (error) {
       console.error("❌ 성별 업데이트 실패:", error);
+      alert("성별 업데이트 실패: " + (error as Error)?.message);
       return false;
     }
   };
 
   // 단백질 목적 업데이트
   const updateProteinGoal = async (newGoal: ProteinGoal): Promise<boolean> => {
+    console.log("🎯 단백질 목표 업데이트 시작:", newGoal);
+
+    // 로컬 상태는 즉시 업데이트
+    setProteinGoal(newGoal);
+
     if (!user) {
-      setProteinGoal(newGoal);
       return true;
     }
 
     try {
-      // 로컬 상태는 즉시 업데이트
-      setProteinGoal(newGoal);
+      const { error } = await supabase
+        .from("user_profiles")
+        .update({ protein_goal: newGoal })
+        .eq("auth_id", user.id);
 
-      // DB 업데이트는 선택적 (테이블 구조 확인 필요)
-      // TODO: 나중에 DB 저장 추가
-      console.log("✅ 단백질 목적 업데이트 성공 (로컬):", newGoal);
+      console.log("📝 단백질 목표 업데이트 결과:", { error });
+
+      if (error) throw error;
+
+      console.log("✅ 단백질 목표 업데이트 성공:", newGoal);
       return true;
     } catch (error) {
-      console.error("❌ 단백질 목적 업데이트 실패:", error);
+      console.error("❌ 단백질 목표 업데이트 실패:", error);
+      alert("단백질 목표 업데이트 실패: " + (error as Error)?.message);
       return false;
     }
   };

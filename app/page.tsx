@@ -1,32 +1,32 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
 import {
   Calendar,
+  Check,
+  Edit,
+  LogOut,
   Plus,
   Settings,
   Trash2,
-  Edit,
-  Check,
-  X,
-  LogOut,
   User,
+  X,
 } from "lucide-react";
+import React, { useEffect, useState } from "react";
 
 // Hooks
 import { useAuth } from "./hooks/useAuth";
-import { useFood } from "./hooks/useFood";
-import { useDailyRecords } from "./hooks/useDailyRecords";
 import { useBodyWeight } from "./hooks/useBodyWeight";
+import { useDailyRecords } from "./hooks/useDailyRecords";
+import { useFood } from "./hooks/useFood";
 
 // Components
 import { AuthForm } from "./components/auth/AuthForm";
 
 // Utils
-import { generateCalendar, dateKeyToDateString } from "./utils/dateUtils";
+import { dateKeyToDateString, generateCalendar } from "./utils/dateUtils";
 
 // Constants
-import { MEAL_NAMES, DAY_NAMES, PROTEIN_GOALS } from "./constants";
+import { DAY_NAMES, MEAL_NAMES, PROTEIN_GOALS } from "./constants";
 import { ProteinGoal } from "./types";
 
 const ProteinTracker: React.FC = () => {
@@ -90,48 +90,6 @@ const ProteinTracker: React.FC = () => {
     bodyWeight.resetBodyWeight();
   };
 
-  // 로딩 화면
-  if (auth.loading) {
-    return (
-      <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 flex items-center justify-center">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
-          <p className="text-gray-600">로딩 중...</p>
-        </div>
-      </div>
-    );
-  }
-
-  // 로그인하지 않은 경우
-  if (!auth.user) {
-    return (
-      <AuthForm
-        username={auth.username}
-        password={auth.password}
-        confirmPassword={auth.confirmPassword}
-        authMode={auth.authMode}
-        onUsernameChange={auth.setUsername}
-        onPasswordChange={auth.setPassword}
-        onConfirmPasswordChange={auth.setConfirmPassword}
-        onAuthModeChange={auth.setAuthMode}
-        onLogin={handleLogin}
-        onSignup={auth.handleSignup}
-      />
-    );
-  }
-
-  // 현재 선택된 날짜의 기록과 통계
-  const currentRecord = dailyRecords.getDayRecord(selectedDate);
-  const totalProtein = dailyRecords.getTotalProtein(selectedDate);
-  const targetProtein = bodyWeight.getTargetProtein(
-    currentRecord.hasCardio,
-    currentRecord.hasStrength
-  );
-  const progressPercentage = Math.min(
-    (totalProtein / targetProtein) * 100,
-    100
-  );
-
   // 직접 입력으로 음식 추가하는 함수
   const addDirectFood = async (meal: "breakfast" | "lunch" | "dinner") => {
     const inputData = directInputData[meal];
@@ -180,6 +138,48 @@ const ProteinTracker: React.FC = () => {
     }
   };
 
+  // 로딩 화면
+  if (auth.loading) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
+          <p className="text-gray-600">로딩 중...</p>
+        </div>
+      </div>
+    );
+  }
+
+  // 로그인하지 않은 경우
+  if (!auth.user) {
+    return (
+      <AuthForm
+        username={auth.username}
+        password={auth.password}
+        confirmPassword={auth.confirmPassword}
+        authMode={auth.authMode}
+        onUsernameChange={auth.setUsername}
+        onPasswordChange={auth.setPassword}
+        onConfirmPasswordChange={auth.setConfirmPassword}
+        onAuthModeChange={auth.setAuthMode}
+        onLogin={handleLogin}
+        onSignup={auth.handleSignup}
+      />
+    );
+  }
+
+  // 현재 선택된 날짜의 기록과 통계
+  const currentRecord = dailyRecords.getDayRecord(selectedDate);
+  const totalProtein = dailyRecords.getTotalProtein(selectedDate);
+  const targetProtein = bodyWeight.getTargetProtein(
+    currentRecord.hasCardio,
+    currentRecord.hasStrength
+  );
+  const progressPercentage = Math.min(
+    (totalProtein / targetProtein) * 100,
+    100
+  );
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 p-4">
       <div className="max-w-6xl mx-auto">
@@ -196,26 +196,17 @@ const ProteinTracker: React.FC = () => {
                 {auth.userDisplayName || "Loading..."}
               </div>
               <div className="flex gap-2">
-                {/* <button
-                  onClick={() => setShowCalculator(true)}
-                  className="flex items-center gap-2 px-4 py-2 bg-green-500 text-white rounded-lg hover:bg-green-600 transition-colors"
-                >
-                  <Calculator size={20} />
-                  계산기
-                </button> */}
                 <button
                   onClick={() => setShowSettings(true)}
                   className="flex items-center gap-2 px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors"
                 >
                   <Settings size={20} />
-                  {/* 설정 */}
                 </button>
                 <button
                   onClick={handleLogout}
                   className="flex items-center gap-2 px-4 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600 transition-colors"
                 >
                   <LogOut size={20} />
-                  {/* 로그아웃 */}
                 </button>
               </div>
             </div>
@@ -552,7 +543,7 @@ const ProteinTracker: React.FC = () => {
                     >
                       <option value="">음식 추가...</option>
                       {food.foodDatabase
-                        .sort((a, b) => a.name.localeCompare(b.name)) // 오름차순 정렬
+                        .sort((a, b) => a.name.localeCompare(b.name))
                         .map((foodItem) => (
                           <option key={foodItem.id} value={foodItem.id}>
                             {foodItem.name} ({foodItem.protein}g)
@@ -630,9 +621,9 @@ const ProteinTracker: React.FC = () => {
                       >
                         <div className="flex items-center justify-between">
                           <div className="flex items-center gap-2">
-                            <span className="text-lg">{goal.icon}</span>
+                            <span className="text-lg">{goal.goalIcon}</span>
                             <div>
-                              <div className="font-medium">{goal.name}</div>
+                              <div className="font-medium">{goal.goalName}</div>
                               <div className="text-xs text-gray-600">
                                 {goal.description}
                               </div>
@@ -752,7 +743,7 @@ const ProteinTracker: React.FC = () => {
                 {/* 내가 추가한 음식 목록 */}
                 <div className="space-y-2 max-h-40 overflow-y-auto">
                   {food.foodDatabase
-                    .filter((foodItem) => foodItem.user_id === auth.user?.id)
+                    .filter((foodItem) => !foodItem.is_default) // 👈 이렇게 변경
                     .map((foodItem) => (
                       <div
                         key={foodItem.id}
@@ -821,9 +812,15 @@ const ProteinTracker: React.FC = () => {
                     ))}
                 </div>
 
-                {food.foodDatabase.filter(
-                  (foodItem) => foodItem.user_id === auth.user?.id
-                ).length === 0 && (
+                {food.foodDatabase.filter((foodItem) => !foodItem.is_default)
+                  .length === 0 && (
+                  <p className="text-sm text-gray-500 text-center py-4">
+                    아직 추가한 음식이 없습니다.
+                  </p>
+                )}
+
+                {food.foodDatabase.filter((foodItem) => !foodItem.is_default)
+                  .length === 0 && (
                   <p className="text-sm text-gray-500 text-center py-4">
                     아직 추가한 음식이 없습니다.
                   </p>
