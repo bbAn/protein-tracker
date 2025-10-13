@@ -1,0 +1,17 @@
+{
+  // 1. 기본 포맷터를 Prettier로 지정합니다.
+  "editor.defaultFormatter": "esbenp.prettier-vscode",
+
+  // 2. 저장 시 자동으로 포맷팅을 실행하도록 설정합니다.
+  "editor.formatOnSave": true,
+
+  // 3. 저장 시 아래 기능도 함께 실행합니다.
+  "editor.codeActionsOnSave": {
+    "source.fixAll.eslint": "explicit", // ESLint 오류 자동 수정
+    "source.organizeImports": "explicit" // 저장시 사용하지 않는 import 자동 삭제
+  },
+  
+  // 4. import 시에 절대경로로 임포트 되도록
+  "typescript.preferences.importModuleSpecifier": "non-relative",
+  "javascript.preferences.importModuleSpecifier": "non-relative"
+}
