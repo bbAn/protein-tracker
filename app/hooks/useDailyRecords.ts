@@ -1,15 +1,15 @@
 import { useCallback, useState } from "react";
 import { supabase } from "../../lib/supabase";
 import {
-  DayRecord,
   DailyRecord,
+  DayRecord,
   FoodItem,
   MealType,
   SupabaseUser,
 } from "../types";
 import {
-  dateStringToDateKey,
   dateKeyToDateString,
+  dateStringToDateKey,
   getKoreanDateString,
 } from "../utils/dateUtils";
 
@@ -88,9 +88,9 @@ export const useDailyRecords = (
                 breakfast: [],
                 lunch: [],
                 dinner: [],
-                isWorkoutDay: record.is_workout_day || false,
-                hasCardio: false,
-                hasStrength: false,
+                isWorkoutDay: record.is_workout_day || false, // 하위 호환성
+                hasCardio: record.has_cardio || false,
+                hasStrength: record.has_strength || false,
               };
             }
             recordsMap[dateKey][record.meal_type].push({
@@ -98,6 +98,9 @@ export const useDailyRecords = (
               name: record.food_name,
               protein: record.protein_amount,
             });
+            // 각 기록에서 운동 여부를 업데이트 (가장 마지막 기록 기준)
+            recordsMap[dateKey].hasCardio = record.has_cardio;
+            recordsMap[dateKey].hasStrength = record.has_strength;
           });
 
           console.log("📊 로드된 날짜별 기록:");
@@ -122,14 +125,16 @@ export const useDailyRecords = (
 
   // 특정 날짜의 기록 가져오기
   const getDayRecord = (dateString: string): DayRecord => {
-    return dailyRecords[dateString] || {
-      breakfast: [],
-      lunch: [],
-      dinner: [],
-      isWorkoutDay: false,
-      hasCardio: false,
-      hasStrength: false,
-    };
+    return (
+      dailyRecords[dateString] || {
+        breakfast: [],
+        lunch: [],
+        dinner: [],
+        isWorkoutDay: false,
+        hasCardio: false,
+        hasStrength: false,
+      }
+    );
   };
 
   // 특정 날짜의 총 단백질량 계산
@@ -151,7 +156,6 @@ export const useDailyRecords = (
     if (!food || !user) return false;
 
     try {
-      // user_profiles의 id 가져오기
       const profileId = await getUserProfileId(user.id);
       if (!profileId) {
         console.error("User profile not found");
@@ -161,14 +165,6 @@ export const useDailyRecords = (
       const currentRecord = getDayRecord(selectedDate);
       const dbDateString = dateKeyToDateString(selectedDate);
 
-      console.log("🍽️ 음식 추가:", {
-        selectedDate,
-        dbDateString,
-        meal,
-        food: food.name,
-        profileId,
-      });
-
       const { data, error } = await supabase
         .from("daily_records")
         .insert({
@@ -177,13 +173,13 @@ export const useDailyRecords = (
           meal_type: meal,
           food_name: food.name,
           protein_amount: food.protein,
-          is_workout_day: currentRecord.isWorkoutDay,
+          has_cardio: currentRecord.hasCardio,
+          has_strength: currentRecord.hasStrength,
         })
         .select();
 
       if (error) throw error;
 
-      // 로컬 상태 업데이트
       const updatedRecords = { ...dailyRecords };
       if (!updatedRecords[selectedDate]) {
         updatedRecords[selectedDate] = {
@@ -191,8 +187,8 @@ export const useDailyRecords = (
           lunch: [],
           dinner: [],
           isWorkoutDay: false,
-          hasCardio: false,
-          hasStrength: false,
+          hasCardio: currentRecord.hasCardio,
+          hasStrength: currentRecord.hasStrength,
         };
       }
 
@@ -223,7 +219,6 @@ export const useDailyRecords = (
     if (!user || !foodName || proteinAmount <= 0) return false;
 
     try {
-      // user_profiles의 id 가져오기
       const profileId = await getUserProfileId(user.id);
       if (!profileId) {
         console.error("User profile not found");
@@ -241,13 +236,13 @@ export const useDailyRecords = (
           meal_type: meal,
           food_name: foodName,
           protein_amount: proteinAmount,
-          is_workout_day: currentRecord.isWorkoutDay,
+          has_cardio: currentRecord.hasCardio,
+          has_strength: currentRecord.hasStrength,
         })
         .select();
 
       if (error) throw error;
 
-      // 로컬 상태 업데이트
       const updatedRecords = { ...dailyRecords };
       if (!updatedRecords[selectedDate]) {
         updatedRecords[selectedDate] = {
@@ -255,8 +250,8 @@ export const useDailyRecords = (
           lunch: [],
           dinner: [],
           isWorkoutDay: false,
-          hasCardio: false,
-          hasStrength: false,
+          hasCardio: currentRecord.hasCardio,
+          hasStrength: currentRecord.hasStrength,
         };
       }
 
@@ -317,58 +312,41 @@ export const useDailyRecords = (
     }
   };
 
-  // 운동 여부 토글
-  const toggleWorkoutDay = async (selectedDate: string): Promise<boolean> => {
-    if (!user) return false;
+  // 운동 여부 업데이트 함수
+  const updateWorkoutStatus = async (
+    selectedDate: string,
+    newStatus: Partial<{ has_cardio: boolean; has_strength: boolean }>
+  ) => {
+    if (!user) return;
+
+    const profileId = await getUserProfileId(user.id);
+    if (!profileId) {
+      console.error("User profile not found");
+      return;
+    }
+
+    const dbDateString = dateKeyToDateString(selectedDate);
 
     try {
-      // user_profiles의 id 가져오기
-      const profileId = await getUserProfileId(user.id);
-      if (!profileId) {
-        console.error("User profile not found");
-        return false;
-      }
-
-      const updatedRecords = { ...dailyRecords };
-      if (!updatedRecords[selectedDate]) {
-        updatedRecords[selectedDate] = {
-          breakfast: [],
-          lunch: [],
-          dinner: [],
-          isWorkoutDay: false,
-          hasCardio: false,
-          hasStrength: false,
-        };
-      }
-
-      const newWorkoutStatus = !updatedRecords[selectedDate].isWorkoutDay;
-      updatedRecords[selectedDate].isWorkoutDay = newWorkoutStatus;
-
-      const dbDateString = dateKeyToDateString(selectedDate);
-
+      // 해당 날짜의 모든 기록에 대해 운동 여부를 업데이트합니다.
       const { error } = await supabase
         .from("daily_records")
-        .update({ is_workout_day: newWorkoutStatus })
+        .update(newStatus)
         .eq("user_id", profileId)
-        .eq("record_date", dbDateString)
-        .select();
+        .eq("record_date", dbDateString);
 
-      if (error) {
-        console.error("운동 여부 업데이트 실패:", error);
-        updatedRecords[selectedDate].isWorkoutDay = !newWorkoutStatus;
-        return false;
-      }
+      if (error) throw error;
 
-      setDailyRecords(updatedRecords);
-      return true;
+      console.log("✅ 운동 상태 DB 업데이트 성공:", newStatus);
     } catch (error) {
-      console.error("❌ 운동 여부 토글 실패:", error);
-      return false;
+      console.error("❌ 운동 상태 DB 업데이트 실패:", error);
+      // 여기서 원래 상태로 되돌리는 로직을 추가할 수 있습니다.
+      alert("운동 상태 업데이트 중 오류가 발생했습니다.");
     }
   };
 
   // 유산소 운동 토글
-  const toggleCardio = (selectedDate: string): void => {
+  const toggleCardio = async (selectedDate: string): Promise<void> => {
     const updatedRecords = { ...dailyRecords };
     if (!updatedRecords[selectedDate]) {
       updatedRecords[selectedDate] = {
@@ -380,12 +358,16 @@ export const useDailyRecords = (
         hasStrength: false,
       };
     }
-    updatedRecords[selectedDate].hasCardio = !updatedRecords[selectedDate].hasCardio;
+    const newStatus = !updatedRecords[selectedDate].hasCardio;
+    updatedRecords[selectedDate].hasCardio = newStatus;
     setDailyRecords(updatedRecords);
+
+    // DB 업데이트
+    await updateWorkoutStatus(selectedDate, { has_cardio: newStatus });
   };
 
   // 근력 운동 토글
-  const toggleStrength = (selectedDate: string): void => {
+  const toggleStrength = async (selectedDate: string): Promise<void> => {
     const updatedRecords = { ...dailyRecords };
     if (!updatedRecords[selectedDate]) {
       updatedRecords[selectedDate] = {
@@ -397,8 +379,12 @@ export const useDailyRecords = (
         hasStrength: false,
       };
     }
-    updatedRecords[selectedDate].hasStrength = !updatedRecords[selectedDate].hasStrength;
+    const newStatus = !updatedRecords[selectedDate].hasStrength;
+    updatedRecords[selectedDate].hasStrength = newStatus;
     setDailyRecords(updatedRecords);
+
+    // DB 업데이트
+    await updateWorkoutStatus(selectedDate, { has_strength: newStatus });
   };
 
   return {
@@ -414,7 +400,6 @@ export const useDailyRecords = (
     addFoodToMeal,
     addDirectFoodToMeal,
     removeFoodFromMeal,
-    toggleWorkoutDay,
     toggleCardio,
     toggleStrength,
   };
