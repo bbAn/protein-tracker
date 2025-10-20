@@ -184,42 +184,16 @@ export const useBodyWeight = (user: SupabaseUser | null) => {
     }
   };
 
-  // 현재 단백질 목적에 따른 배수 정보 가져오기
+  // 현재 설정된 단백질 목표의 배수 가져오기
   const getProteinMultipliers = () => {
-    try {
-      const currentGender = gender || "male";
-      const currentGoal = proteinGoal || "maintain";
-
-      if (
-        !PROTEIN_GOALS[currentGender] ||
-        !PROTEIN_GOALS[currentGender][currentGoal]
-      ) {
-        return {
-          normal: 1.2,
-          workout: 2.0,
-          goalName: "체중 유지",
-          goalIcon: "⚖️",
-          description: "현재 체중과 근육량 유지",
-        };
-      }
-
-      const goal = PROTEIN_GOALS[currentGender][currentGoal];
-      return {
-        normal: goal.normal,
-        workout: goal.workout,
-        goalName: goal.name,
-        goalIcon: goal.icon,
-        description: goal.description,
-      };
-    } catch {
-      return {
-        normal: 1.2,
-        workout: 2.0,
-        goalName: "체중 유지",
-        goalIcon: "⚖️",
-        description: "현재 체중과 근육량 유지",
-      };
-    }
+    const multipliers = PROTEIN_GOALS[gender][proteinGoal];
+    return {
+      normal: multipliers.normal,
+      workout: multipliers.workout,
+      name: multipliers.name,
+      icon: multipliers.icon,
+      description: multipliers.description,
+    };
   };
 
   // 로그아웃 시 초기화

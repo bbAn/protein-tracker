@@ -9,12 +9,14 @@ import { useDailyRecords } from "./hooks/useDailyRecords";
 import { useFood } from "./hooks/useFood";
 
 // Components
+import { ProteinGoal } from "@/app/types";
 import { AuthForm } from "./components/auth/AuthForm";
 import { CalendarView } from "./components/calendar/CalendarView";
 import { Header } from "./components/layout/Header";
 import { LoadingScreen } from "./components/layout/LoadingScreen";
 import { SettingsModal } from "./components/modals/SettingsModal";
 import { DailyRecordPanel } from "./components/record/DailyRecordPanel";
+import { PROTEIN_GOALS } from "./constants";
 
 // Types
 
@@ -252,8 +254,16 @@ const ProteinTracker: React.FC = () => {
           onClose={() => closeModal("settings")}
           bodyWeight={bodyWeight.bodyWeight}
           tempBodyWeight={bodyWeight.tempBodyWeight}
+          gender={bodyWeight.gender}
+          proteinGoal={bodyWeight.proteinGoal}
+          proteinGoals={PROTEIN_GOALS}
           onBodyWeightChange={bodyWeight.setTempBodyWeight}
           onBodyWeightSubmit={bodyWeight.handleBodyWeightSubmit}
+          onGenderChange={bodyWeight.updateGender}
+          onProteinGoalChange={(goal: string) =>
+            bodyWeight.updateProteinGoal(goal as ProteinGoal)
+          }
+          getProteinMultipliers={bodyWeight.getProteinMultipliers}
           foodDatabase={food.foodDatabase}
           newFood={food.newFood}
           editingFood={food.editingFood}
