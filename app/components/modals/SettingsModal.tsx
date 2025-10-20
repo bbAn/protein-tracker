@@ -1,10 +1,14 @@
 import { Check, Edit, Plus, Trash2, X } from "lucide-react";
 import React from "react";
 
+// FoodItem 중복 제거 - 하나만 import
 interface FoodItem {
   id: number;
+  user_id?: string;
   name: string;
   protein: number;
+  is_default?: boolean;
+  created_at?: string;
 }
 
 interface SettingsModalProps {

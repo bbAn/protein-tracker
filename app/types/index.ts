@@ -10,7 +10,6 @@ export interface DayRecord {
   breakfast: MealData[];
   lunch: MealData[];
   dinner: MealData[];
-  isWorkoutDay: boolean; // 하위 호환성을 위해 유지
   hasCardio: boolean;
   hasStrength: boolean;
 }
