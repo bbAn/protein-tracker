@@ -367,7 +367,7 @@ export const useDailyRecords = (
   };
 
   // 근력 운동 토글
-  const toggleStrength = async (selectedDate: string): Promise<void> => {
+  const toggleWorkoutDay = async (selectedDate: string): Promise<void> => {
     const updatedRecords = { ...dailyRecords };
     if (!updatedRecords[selectedDate]) {
       updatedRecords[selectedDate] = {
@@ -401,6 +401,6 @@ export const useDailyRecords = (
     addDirectFoodToMeal,
     removeFoodFromMeal,
     toggleCardio,
-    toggleStrength,
+    toggleWorkoutDay,
   };
 };
