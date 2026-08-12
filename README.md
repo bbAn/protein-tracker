@@ -12,7 +12,7 @@
 
 ## 기술 스택
 
-- Next.js 14
+- Next.js 15
 - TypeScript
 - Tailwind CSS
 - Supabase
