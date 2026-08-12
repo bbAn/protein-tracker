@@ -10,7 +10,6 @@ import {
 import {
   dateKeyToDateString,
   dateStringToDateKey,
-  getKoreanDateString,
 } from "../utils/dateUtils";
 
 export const useDailyRecords = (
@@ -57,20 +56,10 @@ export const useDailyRecords = (
           return;
         }
 
-        const thirtyDaysAgo = new Date();
-        thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
-        const koreanDateFrom = getKoreanDateString(thirtyDaysAgo);
-
-        console.log("📅 기록 조회 기간:", {
-          from: koreanDateFrom,
-          profileId,
-        });
-
         const { data: records, error: recordsError } = await supabase
           .from("daily_records")
           .select("*")
           .eq("user_id", profileId)
-          .gte("record_date", koreanDateFrom)
           .order("record_date", { ascending: false });
 
         console.log("📊 기록 조회 결과:", {
