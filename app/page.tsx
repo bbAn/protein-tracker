@@ -38,9 +38,9 @@ interface DirectInputState {
 }
 
 interface DirectInputData {
-  breakfast: { name: string; protein: string };
-  lunch: { name: string; protein: string };
-  dinner: { name: string; protein: string };
+  breakfast: { name: string; amount: string; protein: string };
+  lunch: { name: string; amount: string; protein: string };
+  dinner: { name: string; amount: string; protein: string };
 }
 
 const ProteinTracker: React.FC = () => {
@@ -65,9 +65,9 @@ const ProteinTracker: React.FC = () => {
 
   // 직접 입력 데이터
   const [directInputData, setDirectInputData] = useState<DirectInputData>({
-    breakfast: { name: "", protein: "" },
-    lunch: { name: "", protein: "" },
-    dinner: { name: "", protein: "" },
+    breakfast: { name: "", amount: "", protein: "" },
+    lunch: { name: "", amount: "", protein: "" },
+    dinner: { name: "", amount: "", protein: "" },
   });
 
   // 커스텀 훅들
@@ -147,7 +147,7 @@ const ProteinTracker: React.FC = () => {
       // 입력 필드 초기화
       setDirectInputData((prev) => ({
         ...prev,
-        [meal]: { name: "", protein: "" },
+        [meal]: { name: "", amount: "", protein: "" },
       }));
 
       // 직접 입력 모드 해제
@@ -245,6 +245,7 @@ const ProteinTracker: React.FC = () => {
             onDirectInputDataChange={setDirectInputData}
             onAddDirectFood={addDirectFood}
             onDirectInputKeyDown={handleDirectInputKeyDown}
+            onSearchNutrition={food.searchNutrition}
           />
         </div>
 

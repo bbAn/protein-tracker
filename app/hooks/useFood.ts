@@ -1,7 +1,7 @@
 import { useCallback, useState } from "react";
 import { supabase } from "../../lib/supabase";
 import { DEFAULT_FOODS } from "../constants";
-import { CalcResult, FoodItem, SupabaseUser } from "../types";
+import { CalcResult, FoodItem, NutritionLookupResult, SupabaseUser } from "../types";
 
 export const useFood = (user: SupabaseUser | null) => {
   const [foodDatabase, setFoodDatabase] = useState<FoodItem[]>(DEFAULT_FOODS);
@@ -16,6 +16,29 @@ export const useFood = (user: SupabaseUser | null) => {
   const [calcFood, setCalcFood] = useState<string>("");
   const [calcAmount, setCalcAmount] = useState<string>("");
   const [calcResult, setCalcResult] = useState<CalcResult | null>(null);
+
+  // 영양성분 후보 검색
+  const searchNutrition = useCallback(
+    async (foodName: string): Promise<NutritionLookupResult[]> => {
+      if (!foodName.trim()) return [];
+
+      try {
+        const response = await fetch(
+          `/api/nutrition?q=${encodeURIComponent(foodName)}`
+        );
+
+        if (!response.ok) return [];
+
+        const data: { results: NutritionLookupResult[] } =
+          await response.json();
+        return data.results;
+      } catch (error) {
+        console.error("❌ 영양성분 조회 실패:", error);
+        return [];
+      }
+    },
+    []
+  );
 
   // user_profiles의 id 가져오기
   const getUserProfileId = useCallback(
@@ -303,5 +326,6 @@ export const useFood = (user: SupabaseUser | null) => {
     updateFood,
     calculateProtein,
     resetCalculator,
+    searchNutrition,
   };
 };

@@ -208,6 +208,7 @@ export const useDailyRecords = (
       const profileId = await getUserProfileId(user.id);
       if (!profileId) {
         console.error("User profile not found");
+        alert("사용자 프로필을 찾을 수 없습니다.");
         return false;
       }
 
@@ -251,6 +252,9 @@ export const useDailyRecords = (
       return true;
     } catch (error) {
       console.error("❌ 직접 음식 추가 실패:", error);
+      alert(
+        "음식 추가 중 오류가 발생했습니다: " + (error as Error)?.message
+      );
       return false;
     }
   };

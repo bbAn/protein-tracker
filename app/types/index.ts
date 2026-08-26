@@ -20,6 +20,11 @@ export interface CalcResult {
   protein: string;
 }
 
+export interface NutritionLookupResult {
+  name: string;
+  proteinPer100g: number;
+}
+
 export interface FoodItem {
   id: number;
   user_id?: string;
