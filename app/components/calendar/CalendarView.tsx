@@ -34,7 +34,7 @@ export const CalendarView: React.FC<CalendarViewProps> = ({
                 new Date(currentDate.getFullYear(), currentDate.getMonth() - 1)
               )
             }
-            className="px-3 py-1 text-sm bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200"
+            className="px-3 py-1 text-sm bg-muted-bg text-foreground rounded-lg hover:bg-muted-bg-hover"
           >
             이전
           </button>
@@ -44,7 +44,7 @@ export const CalendarView: React.FC<CalendarViewProps> = ({
                 new Date(currentDate.getFullYear(), currentDate.getMonth() + 1)
               )
             }
-            className="px-3 py-1 text-sm bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200"
+            className="px-3 py-1 text-sm bg-muted-bg text-foreground rounded-lg hover:bg-muted-bg-hover"
           >
             다음
           </button>
@@ -94,8 +94,8 @@ export const CalendarView: React.FC<CalendarViewProps> = ({
                 isSelected
                   ? "border-accent bg-accent/5"
                   : isToday
-                  ? "border-border bg-gray-50"
-                  : "border-border hover:bg-gray-50"
+                  ? "border-border bg-muted-bg"
+                  : "border-border hover:bg-muted-bg"
               }`}
             >
               <div className="p-1 h-full flex flex-col justify-between">

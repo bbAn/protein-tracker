@@ -97,7 +97,7 @@ export const AuthForm: React.FC<AuthFormProps> = ({
                 </button>
                 <button
                   onClick={() => onAuthModeChange("signup")}
-                  className="flex-1 bg-gray-100 text-gray-700 py-3 rounded-lg hover:bg-gray-200 font-medium"
+                  className="flex-1 bg-muted-bg text-foreground py-3 rounded-lg hover:bg-muted-bg-hover font-medium"
                 >
                   회원가입
                 </button>
@@ -106,7 +106,7 @@ export const AuthForm: React.FC<AuthFormProps> = ({
               <>
                 <button
                   onClick={() => onAuthModeChange("login")}
-                  className="flex-1 bg-gray-100 text-gray-700 py-3 rounded-lg hover:bg-gray-200 font-medium"
+                  className="flex-1 bg-muted-bg text-foreground py-3 rounded-lg hover:bg-muted-bg-hover font-medium"
                 >
                   로그인으로
                 </button>
@@ -120,7 +120,7 @@ export const AuthForm: React.FC<AuthFormProps> = ({
             )}
           </div>
 
-          <div className="mt-6 p-4 bg-gray-50 rounded-lg border border-border">
+          <div className="mt-6 p-4 bg-muted-bg rounded-lg border border-border">
             <h3 className="font-medium text-foreground mb-2">🎯 주요 기능</h3>
             <ul className="text-sm text-muted space-y-1">
               <li>📅 달력으로 일일 기록 관리</li>

@@ -91,7 +91,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
               className={`flex-1 p-3 rounded-lg border transition-colors ${
                 gender === "male"
                   ? "border-accent bg-accent/5 text-accent"
-                  : "border-border hover:bg-gray-50"
+                  : "border-border hover:bg-muted-bg"
               }`}
             >
               <div className="text-2xl mb-1">👨</div>
@@ -102,7 +102,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
               className={`flex-1 p-3 rounded-lg border transition-colors ${
                 gender === "female"
                   ? "border-accent bg-accent/5 text-accent"
-                  : "border-border hover:bg-gray-50"
+                  : "border-border hover:bg-muted-bg"
               }`}
             >
               <div className="text-2xl mb-1">👩</div>
@@ -123,7 +123,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                 className={`p-3 rounded-lg border cursor-pointer transition-colors ${
                   proteinGoal === key
                     ? "border-accent bg-accent/5"
-                    : "border-border hover:bg-gray-50"
+                    : "border-border hover:bg-muted-bg"
                 }`}
                 onClick={() => onProteinGoalChange(key)}
               >
@@ -175,7 +175,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
           />
 
           {/* 현재 설정에 따른 단백질 목표량 표시 */}
-          <div className="mt-2 p-3 bg-gray-50 rounded-lg">
+          <div className="mt-2 p-3 bg-muted-bg rounded-lg">
             <div className="text-sm font-medium text-foreground mb-1">
               {getProteinMultipliers().icon} 현재 설정:{" "}
               {getProteinMultipliers().name}
@@ -234,7 +234,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
             <button
               onClick={onAddFood}
               disabled={!newFood.name || !newFood.protein}
-              className="px-3 py-2 bg-accent text-white rounded-lg hover:bg-accent-hover disabled:bg-gray-200 disabled:text-gray-400 disabled:cursor-not-allowed"
+              className="px-3 py-2 bg-accent text-white rounded-lg hover:bg-accent-hover disabled:bg-muted-bg-hover disabled:text-muted disabled:cursor-not-allowed"
             >
               <Plus size={16} />
             </button>
@@ -247,7 +247,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
               .map((foodItem) => (
                 <div
                   key={foodItem.id}
-                  className="flex justify-between items-center text-sm bg-gray-50 p-2 rounded-lg"
+                  className="flex justify-between items-center text-sm bg-muted-bg p-2 rounded-lg"
                 >
                   {editingFood === foodItem.id ? (
                     // 편집 모드
@@ -279,7 +279,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                       />
                       <button
                         onClick={onStopEditing}
-                        className="text-success hover:text-green-700"
+                        className="text-success hover:opacity-80"
                       >
                         <Check size={14} />
                       </button>
@@ -322,7 +322,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
         <div className="flex justify-end">
           <button
             onClick={onClose}
-            className="px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200"
+            className="px-4 py-2 bg-muted-bg text-foreground rounded-lg hover:bg-muted-bg-hover"
           >
             닫기
           </button>

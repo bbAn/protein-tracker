@@ -185,7 +185,7 @@ export const DailyRecordPanel: React.FC<DailyRecordPanelProps> = ({
             {totalProtein.toFixed(1)}g / {targetProtein.toFixed(0)}g
           </span>
         </div>
-        <div className="w-full bg-gray-100 rounded-full h-2">
+        <div className="w-full bg-muted-bg-hover rounded-full h-2">
           <div
             className={`h-2 rounded-full transition-all ${
               progressPercentage >= 100 ? "bg-success" : "bg-accent"
@@ -226,7 +226,7 @@ export const DailyRecordPanel: React.FC<DailyRecordPanelProps> = ({
               {currentRecord[meal].map((foodItem) => (
                 <div
                   key={foodItem.id}
-                  className="flex justify-between items-center text-sm bg-gray-50 p-2 rounded-lg"
+                  className="flex justify-between items-center text-sm bg-muted-bg p-2 rounded-lg"
                 >
                   <span className="text-foreground">{foodItem.name}</span>
                   <div className="flex items-center gap-2">
@@ -254,7 +254,7 @@ export const DailyRecordPanel: React.FC<DailyRecordPanelProps> = ({
                 className={`px-3 py-1 text-xs rounded-lg ${
                   !directInputMode[meal]
                     ? "bg-accent text-white"
-                    : "bg-gray-100 text-gray-700 hover:bg-gray-200"
+                    : "bg-muted-bg text-foreground hover:bg-muted-bg-hover"
                 }`}
               >
                 목록선택
@@ -269,7 +269,7 @@ export const DailyRecordPanel: React.FC<DailyRecordPanelProps> = ({
                 className={`px-3 py-1 text-xs rounded-lg ${
                   directInputMode[meal]
                     ? "bg-accent text-white"
-                    : "bg-gray-100 text-gray-700 hover:bg-gray-200"
+                    : "bg-muted-bg text-foreground hover:bg-muted-bg-hover"
                 }`}
               >
                 직접입력
@@ -304,7 +304,7 @@ export const DailyRecordPanel: React.FC<DailyRecordPanelProps> = ({
                               e.preventDefault();
                               handleSelectSuggestion(meal, suggestion);
                             }}
-                            className="w-full text-left px-3 py-2 text-sm hover:bg-gray-50 flex justify-between gap-2"
+                            className="w-full text-left px-3 py-2 text-sm hover:bg-muted-bg flex justify-between gap-2"
                           >
                             <span className="text-foreground">
                               {suggestion.name}
@@ -363,7 +363,7 @@ export const DailyRecordPanel: React.FC<DailyRecordPanelProps> = ({
                     !directInputData[meal].name ||
                     !directInputData[meal].protein
                   }
-                  className="w-full px-4 py-2 bg-accent text-white rounded-lg hover:bg-accent-hover disabled:bg-gray-200 disabled:text-gray-400 disabled:cursor-not-allowed text-sm"
+                  className="w-full px-4 py-2 bg-accent text-white rounded-lg hover:bg-accent-hover disabled:bg-muted-bg-hover disabled:text-muted disabled:cursor-not-allowed text-sm"
                 >
                   추가
                 </button>
