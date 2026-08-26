@@ -22,9 +22,9 @@ export const CalendarView: React.FC<CalendarViewProps> = ({
   onDateSelect,
 }) => {
   return (
-    <div className="lg:col-span-2 bg-white rounded-2xl shadow-lg p-6">
+    <div className="lg:col-span-2 bg-surface rounded-xl border border-border p-6">
       <div className="flex justify-between items-center mb-6">
-        <h2 className="text-xl font-semibold">
+        <h2 className="text-lg font-semibold text-foreground">
           {currentDate.getFullYear()}년 {currentDate.getMonth() + 1}월
         </h2>
         <div className="flex gap-2">
@@ -34,7 +34,7 @@ export const CalendarView: React.FC<CalendarViewProps> = ({
                 new Date(currentDate.getFullYear(), currentDate.getMonth() - 1)
               )
             }
-            className="px-3 py-1 bg-gray-200 rounded hover:bg-gray-300"
+            className="px-3 py-1 text-sm bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200"
           >
             이전
           </button>
@@ -44,7 +44,7 @@ export const CalendarView: React.FC<CalendarViewProps> = ({
                 new Date(currentDate.getFullYear(), currentDate.getMonth() + 1)
               )
             }
-            className="px-3 py-1 bg-gray-200 rounded hover:bg-gray-300"
+            className="px-3 py-1 text-sm bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200"
           >
             다음
           </button>
@@ -53,10 +53,7 @@ export const CalendarView: React.FC<CalendarViewProps> = ({
 
       <div className="grid grid-cols-7 gap-2 mb-4">
         {DAY_NAMES.map((day) => (
-          <div
-            key={day}
-            className="text-center font-semibold text-gray-600 py-2"
-          >
+          <div key={day} className="text-center font-medium text-muted py-2">
             {day}
           </div>
         ))}
@@ -93,23 +90,23 @@ export const CalendarView: React.FC<CalendarViewProps> = ({
             <div
               key={dateString}
               onClick={() => onDateSelect(dateString)}
-              className={`h-14 border-2 rounded-lg cursor-pointer transition-all ${
+              className={`h-14 border rounded-lg cursor-pointer transition-colors ${
                 isSelected
-                  ? "border-blue-500 bg-blue-50"
+                  ? "border-accent bg-accent/5"
                   : isToday
-                  ? "border-green-500 bg-green-50"
-                  : "border-gray-200 hover:border-gray-300"
+                  ? "border-border bg-gray-50"
+                  : "border-border hover:bg-gray-50"
               }`}
             >
               <div className="p-1 h-full flex flex-col justify-between">
-                <div className="text-sm font-medium">{date.getDate()}</div>
+                <div className="text-sm font-medium text-foreground">
+                  {date.getDate()}
+                </div>
                 {dayTotal > 0 && (
                   <div className="text-xs">
                     <div
                       className={`text-center ${
-                        dayTotal >= dayTarget
-                          ? "text-green-600"
-                          : "text-orange-600"
+                        dayTotal >= dayTarget ? "text-success" : "text-muted"
                       }`}
                     >
                       {dayTotal.toFixed(0)}g
@@ -117,10 +114,10 @@ export const CalendarView: React.FC<CalendarViewProps> = ({
                     {(dayRecord.hasCardio || dayRecord.hasStrength) && (
                       <div className="flex gap-0.5 justify-center">
                         {dayRecord.hasCardio && (
-                          <div className="w-1.5 h-1.5 bg-blue-500 rounded-full"></div>
+                          <div className="w-1.5 h-1.5 bg-accent rounded-full"></div>
                         )}
                         {dayRecord.hasStrength && (
-                          <div className="w-1.5 h-1.5 bg-green-500 rounded-full"></div>
+                          <div className="w-1.5 h-1.5 bg-success rounded-full"></div>
                         )}
                       </div>
                     )}

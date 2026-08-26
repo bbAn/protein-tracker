@@ -2,7 +2,6 @@ import { Trash2 } from "lucide-react";
 import React, { useRef, useState } from "react";
 import { MEAL_NAMES } from "../../constants";
 import { DayRecord, FoodItem, MealType, NutritionLookupResult } from "../../types";
-import { dateKeyToDateString } from "../../utils/dateUtils";
 
 interface DirectInputState {
   breakfast: boolean;
@@ -150,9 +149,9 @@ export const DailyRecordPanel: React.FC<DailyRecordPanelProps> = ({
   );
 
   return (
-    <div className="bg-white rounded-2xl shadow-lg p-6">
+    <div className="bg-surface rounded-xl border border-border p-6">
       <div className="flex justify-between items-center mb-4">
-        <h3 className="text-lg font-semibold">
+        <h3 className="text-lg font-semibold text-foreground">
           {new Date(selectedDate).getMonth() + 1}/
           {new Date(selectedDate).getDate()} 기록
         </h3>
@@ -162,70 +161,46 @@ export const DailyRecordPanel: React.FC<DailyRecordPanelProps> = ({
               type="checkbox"
               checked={currentRecord.hasCardio}
               onChange={onToggleCardio}
-              className="w-4 h-4 accent-blue-500"
+              className="w-4 h-4 accent-accent"
             />
-            <span className="text-sm">유산소</span>
+            <span className="text-sm text-muted">유산소</span>
           </label>
           <label className="flex items-center gap-2 cursor-pointer">
             <input
               type="checkbox"
               checked={currentRecord.hasStrength}
               onChange={onToggleStrength}
-              className="w-4 h-4 accent-red-500"
+              className="w-4 h-4 accent-accent"
             />
-            <span className="text-sm">근력운동</span>
+            <span className="text-sm text-muted">근력운동</span>
           </label>
         </div>
       </div>
 
       {/* 진행률 */}
       <div className="mb-6">
-        <div className="flex justify-between text-sm mb-2">
+        <div className="flex justify-between text-sm mb-2 text-muted">
           <span>진행률</span>
           <span>
             {totalProtein.toFixed(1)}g / {targetProtein.toFixed(0)}g
           </span>
         </div>
-        <div className="w-full bg-gray-200 rounded-full h-3">
+        <div className="w-full bg-gray-100 rounded-full h-2">
           <div
-            className={`h-3 rounded-full transition-all ${
-              progressPercentage >= 100 ? "bg-green-500" : "bg-blue-500"
+            className={`h-2 rounded-full transition-all ${
+              progressPercentage >= 100 ? "bg-success" : "bg-accent"
             }`}
             style={{ width: `${Math.min(progressPercentage, 100)}%` }}
           ></div>
         </div>
         <div className="text-center mt-2 text-sm">
           {totalProtein >= targetProtein ? (
-            <span className="text-green-600 font-semibold">목표 달성! 🎉</span>
+            <span className="text-success font-medium">목표 달성! 🎉</span>
           ) : (
-            <span className="text-orange-600">
+            <span className="text-muted">
               {(targetProtein - totalProtein).toFixed(1)}g 부족
             </span>
           )}
-        </div>
-
-        {/* 디버깅 정보 */}
-        <div className="text-xs text-gray-400 mt-2 p-2 bg-gray-50 rounded">
-          <div>🕐 현재 시간: {new Date().toLocaleString("ko-KR")}</div>
-          <div>📅 선택된 날짜: {selectedDate}</div>
-          <div>🌏 DB 저장 날짜: {dateKeyToDateString(selectedDate)}</div>
-          <div>
-            📊 오늘 기록 수:{" "}
-            {
-              [
-                ...currentRecord.breakfast,
-                ...currentRecord.lunch,
-                ...currentRecord.dinner,
-              ].length
-            }
-            개
-          </div>
-          <div>
-            💪 운동:
-            {currentRecord.hasCardio && " 유산소"}
-            {currentRecord.hasStrength && " 근력"}
-            {!currentRecord.hasCardio && !currentRecord.hasStrength && " 없음"}
-          </div>
         </div>
       </div>
 
@@ -239,8 +214,10 @@ export const DailyRecordPanel: React.FC<DailyRecordPanelProps> = ({
         return (
           <div key={meal} className="mb-4">
             <div className="flex justify-between items-center mb-2">
-              <h4 className="font-medium">{MEAL_NAMES[meal]}</h4>
-              <span className="text-sm text-gray-600">
+              <h4 className="font-medium text-foreground">
+                {MEAL_NAMES[meal]}
+              </h4>
+              <span className="text-sm text-muted">
                 {mealTotal.toFixed(1)}g
               </span>
             </div>
@@ -249,14 +226,14 @@ export const DailyRecordPanel: React.FC<DailyRecordPanelProps> = ({
               {currentRecord[meal].map((foodItem) => (
                 <div
                   key={foodItem.id}
-                  className="flex justify-between items-center text-sm bg-gray-50 p-2 rounded"
+                  className="flex justify-between items-center text-sm bg-gray-50 p-2 rounded-lg"
                 >
-                  <span>{foodItem.name}</span>
+                  <span className="text-foreground">{foodItem.name}</span>
                   <div className="flex items-center gap-2">
-                    <span>{foodItem.protein}g</span>
+                    <span className="text-muted">{foodItem.protein}g</span>
                     <button
                       onClick={() => onRemoveFood(meal, foodItem.id)}
-                      className="text-red-500 hover:text-red-700"
+                      className="text-muted hover:text-danger"
                     >
                       <Trash2 size={12} />
                     </button>
@@ -276,8 +253,8 @@ export const DailyRecordPanel: React.FC<DailyRecordPanelProps> = ({
                 }
                 className={`px-3 py-1 text-xs rounded-lg ${
                   !directInputMode[meal]
-                    ? "bg-blue-500 text-white"
-                    : "bg-gray-200 text-gray-700 hover:bg-gray-300"
+                    ? "bg-accent text-white"
+                    : "bg-gray-100 text-gray-700 hover:bg-gray-200"
                 }`}
               >
                 목록선택
@@ -291,8 +268,8 @@ export const DailyRecordPanel: React.FC<DailyRecordPanelProps> = ({
                 }
                 className={`px-3 py-1 text-xs rounded-lg ${
                   directInputMode[meal]
-                    ? "bg-blue-500 text-white"
-                    : "bg-gray-200 text-gray-700 hover:bg-gray-300"
+                    ? "bg-accent text-white"
+                    : "bg-gray-100 text-gray-700 hover:bg-gray-200"
                 }`}
               >
                 직접입력
@@ -315,10 +292,10 @@ export const DailyRecordPanel: React.FC<DailyRecordPanelProps> = ({
                     onBlur={() =>
                       setShowSuggestions((prev) => ({ ...prev, [meal]: false }))
                     }
-                    className="w-full p-2 text-sm border rounded-lg focus:ring-2 focus:ring-blue-500"
+                    className="w-full p-2 text-sm border border-border rounded-lg focus:ring-2 focus:ring-accent"
                   />
                   {showSuggestions[meal] && suggestions[meal].length > 0 && (
-                    <ul className="absolute z-10 mt-1 w-full max-h-48 overflow-auto bg-white border rounded-lg shadow-lg">
+                    <ul className="absolute z-10 mt-1 w-full max-h-48 overflow-auto bg-surface border border-border rounded-lg shadow-md">
                       {suggestions[meal].map((suggestion, index) => (
                         <li key={`${suggestion.name}-${index}`}>
                           <button
@@ -327,10 +304,12 @@ export const DailyRecordPanel: React.FC<DailyRecordPanelProps> = ({
                               e.preventDefault();
                               handleSelectSuggestion(meal, suggestion);
                             }}
-                            className="w-full text-left px-3 py-2 text-sm hover:bg-blue-50 flex justify-between gap-2"
+                            className="w-full text-left px-3 py-2 text-sm hover:bg-gray-50 flex justify-between gap-2"
                           >
-                            <span>{suggestion.name}</span>
-                            <span className="text-gray-500 shrink-0">
+                            <span className="text-foreground">
+                              {suggestion.name}
+                            </span>
+                            <span className="text-muted shrink-0">
                               {suggestion.proteinPer100g.toFixed(1)}g/100g
                             </span>
                           </button>
@@ -340,12 +319,12 @@ export const DailyRecordPanel: React.FC<DailyRecordPanelProps> = ({
                   )}
                 </div>
                 {lookupStatus[meal] === "loading" && (
-                  <div className="text-xs text-gray-500">
+                  <div className="text-xs text-muted">
                     단백질 함량 검색 중...
                   </div>
                 )}
                 {lookupStatus[meal] === "not_found" && (
-                  <div className="text-xs text-orange-600">
+                  <div className="text-xs text-muted">
                     일치하는 음식을 찾지 못했어요. 단백질(g)을 직접
                     입력해주세요.
                   </div>
@@ -358,7 +337,7 @@ export const DailyRecordPanel: React.FC<DailyRecordPanelProps> = ({
                     value={directInputData[meal].amount}
                     onChange={(e) => handleAmountChange(meal, e.target.value)}
                     onKeyDown={(e) => onDirectInputKeyDown(e, meal)}
-                    className="min-w-0 flex-1 p-2 text-sm border rounded-lg focus:ring-2 focus:ring-blue-500"
+                    className="min-w-0 flex-1 p-2 text-sm border border-border rounded-lg focus:ring-2 focus:ring-accent"
                   />
                   <input
                     type="number"
@@ -375,7 +354,7 @@ export const DailyRecordPanel: React.FC<DailyRecordPanelProps> = ({
                       }))
                     }
                     onKeyDown={(e) => onDirectInputKeyDown(e, meal)}
-                    className="min-w-0 flex-1 p-2 text-sm border rounded-lg focus:ring-2 focus:ring-blue-500"
+                    className="min-w-0 flex-1 p-2 text-sm border border-border rounded-lg focus:ring-2 focus:ring-accent"
                   />
                 </div>
                 <button
@@ -384,7 +363,7 @@ export const DailyRecordPanel: React.FC<DailyRecordPanelProps> = ({
                     !directInputData[meal].name ||
                     !directInputData[meal].protein
                   }
-                  className="w-full px-4 py-2 bg-green-500 text-white rounded-lg hover:bg-green-600 disabled:bg-gray-300 disabled:cursor-not-allowed text-sm"
+                  className="w-full px-4 py-2 bg-accent text-white rounded-lg hover:bg-accent-hover disabled:bg-gray-200 disabled:text-gray-400 disabled:cursor-not-allowed text-sm"
                 >
                   추가
                 </button>
@@ -398,7 +377,7 @@ export const DailyRecordPanel: React.FC<DailyRecordPanelProps> = ({
                     e.target.value = "";
                   }
                 }}
-                className="w-full p-2 text-sm border rounded-lg"
+                className="w-full p-2 text-sm border border-border rounded-lg"
               >
                 <option value="">음식 추가...</option>
                 {foodDatabase

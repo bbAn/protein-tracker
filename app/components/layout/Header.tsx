@@ -13,29 +13,29 @@ export const Header: React.FC<HeaderProps> = ({
   onLogoutClick,
 }) => {
   return (
-    <div className="bg-white rounded-2xl shadow-lg p-6 mb-6">
+    <div className="bg-surface rounded-xl border border-border p-6 mb-6">
       <div>
-        <h1 className="text-3xl font-bold text-gray-800 flex items-center gap-2 mb-6">
-          <Calendar className="text-blue-600" />
+        <h1 className="text-2xl font-semibold text-foreground flex items-center gap-2 mb-6">
+          <Calendar className="text-accent" size={24} />
           Protein Tracker
         </h1>
         <div className="flex items-center justify-end gap-4">
-          <div className="flex items-center gap-2 text-sm text-gray-600">
+          <div className="flex items-center gap-2 text-sm text-muted">
             <User size={16} />
             {userDisplayName || "Loading..."}
           </div>
           <div className="flex gap-2">
             <button
               onClick={onSettingsClick}
-              className="flex items-center gap-2 px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors"
+              className="flex items-center gap-2 px-3 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors"
             >
-              <Settings size={20} />
+              <Settings size={18} />
             </button>
             <button
               onClick={onLogoutClick}
-              className="flex items-center gap-2 px-4 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600 transition-colors"
+              className="flex items-center gap-2 px-3 py-2 text-danger hover:bg-red-50 rounded-lg transition-colors"
             >
-              <LogOut size={20} />
+              <LogOut size={18} />
             </button>
           </div>
         </div>

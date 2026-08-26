@@ -35,13 +35,13 @@ export const AuthForm: React.FC<AuthFormProps> = ({
   onSignup,
 }) => {
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 flex items-center justify-center p-4">
-      <div className="bg-white rounded-2xl shadow-xl p-8 max-w-md w-full">
+    <div className="min-h-screen bg-background flex items-center justify-center p-4">
+      <div className="bg-surface rounded-xl border border-border p-8 max-w-md w-full">
         <div className="text-center mb-8">
-          <h1 className="text-2xl font-bold text-gray-800 mb-2">
+          <h1 className="text-2xl font-semibold text-foreground mb-2">
             Protein Tracker
           </h1>
-          <p className="text-gray-600">
+          <p className="text-muted">
             {authMode === "login"
               ? "아이디로 로그인하여 단백질 섭취량을 기록하세요"
               : "새 계정을 만들어 단백질 관리를 시작하세요"}
@@ -55,7 +55,7 @@ export const AuthForm: React.FC<AuthFormProps> = ({
               type="text"
               value={username}
               onChange={(e) => onUsernameChange(e.target.value)}
-              className="w-full p-3 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              className="w-full p-3 border border-border rounded-lg focus:ring-2 focus:ring-accent focus:border-transparent"
               placeholder="영문, 숫자, 밑줄(_) 사용 가능"
             />
           </div>
@@ -66,7 +66,7 @@ export const AuthForm: React.FC<AuthFormProps> = ({
               type="password"
               value={password}
               onChange={(e) => onPasswordChange(e.target.value)}
-              className="w-full p-3 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              className="w-full p-3 border border-border rounded-lg focus:ring-2 focus:ring-accent focus:border-transparent"
               placeholder="6자 이상 입력하세요"
             />
           </div>
@@ -80,7 +80,7 @@ export const AuthForm: React.FC<AuthFormProps> = ({
                 type="password"
                 value={confirmPassword}
                 onChange={(e) => onConfirmPasswordChange(e.target.value)}
-                className="w-full p-3 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                className="w-full p-3 border border-border rounded-lg focus:ring-2 focus:ring-accent focus:border-transparent"
                 placeholder="비밀번호를 다시 입력하세요"
               />
             </div>
@@ -91,13 +91,13 @@ export const AuthForm: React.FC<AuthFormProps> = ({
               <>
                 <button
                   onClick={onLogin}
-                  className="flex-1 bg-blue-600 text-white py-3 rounded-lg hover:bg-blue-700 font-medium"
+                  className="flex-1 bg-accent text-white py-3 rounded-lg hover:bg-accent-hover font-medium"
                 >
                   로그인
                 </button>
                 <button
                   onClick={() => onAuthModeChange("signup")}
-                  className="flex-1 bg-green-600 text-white py-3 rounded-lg hover:bg-green-700 font-medium"
+                  className="flex-1 bg-gray-100 text-gray-700 py-3 rounded-lg hover:bg-gray-200 font-medium"
                 >
                   회원가입
                 </button>
@@ -106,13 +106,13 @@ export const AuthForm: React.FC<AuthFormProps> = ({
               <>
                 <button
                   onClick={() => onAuthModeChange("login")}
-                  className="flex-1 bg-gray-600 text-white py-3 rounded-lg hover:bg-gray-700 font-medium"
+                  className="flex-1 bg-gray-100 text-gray-700 py-3 rounded-lg hover:bg-gray-200 font-medium"
                 >
                   로그인으로
                 </button>
                 <button
                   onClick={onSignup}
-                  className="flex-1 bg-green-600 text-white py-3 rounded-lg hover:bg-green-700 font-medium"
+                  className="flex-1 bg-accent text-white py-3 rounded-lg hover:bg-accent-hover font-medium"
                 >
                   가입하기
                 </button>
@@ -120,9 +120,9 @@ export const AuthForm: React.FC<AuthFormProps> = ({
             )}
           </div>
 
-          <div className="mt-6 p-4 bg-yellow-50 rounded-lg border border-yellow-200">
-            <h3 className="font-medium text-yellow-800 mb-2">🎯 주요 기능</h3>
-            <ul className="text-sm text-yellow-700 space-y-1">
+          <div className="mt-6 p-4 bg-gray-50 rounded-lg border border-border">
+            <h3 className="font-medium text-foreground mb-2">🎯 주요 기능</h3>
+            <ul className="text-sm text-muted space-y-1">
               <li>📅 달력으로 일일 기록 관리</li>
               <li>🍽️ 식사별 단백질 섭취량 추적</li>
               <li>💪 운동일/비운동일 구분</li>
@@ -131,8 +131,8 @@ export const AuthForm: React.FC<AuthFormProps> = ({
             </ul>
 
             {authMode === "signup" && (
-              <div className="mt-3 p-2 bg-blue-50 rounded border border-blue-200">
-                <p className="text-xs text-blue-600">
+              <div className="mt-3 p-2 bg-surface rounded border border-border">
+                <p className="text-xs text-muted">
                   💡 <strong>아이디 규칙:</strong> 영문, 숫자, 밑줄(_)만 사용
                   가능하며 3자 이상이어야 합니다.
                 </p>

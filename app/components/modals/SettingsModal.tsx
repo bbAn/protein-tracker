@@ -71,28 +71,27 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-      <div className="bg-white rounded-2xl p-6 max-w-md w-full mx-4 max-h-[80vh] overflow-y-auto">
+    <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50">
+      <div className="bg-surface rounded-xl border border-border p-6 max-w-md w-full mx-4 max-h-[80vh] overflow-y-auto">
         <div className="flex justify-between items-center mb-6">
-          <h3 className="text-lg font-semibold">설정</h3>
-          <button
-            onClick={onClose}
-            className="text-gray-500 hover:text-gray-700"
-          >
+          <h3 className="text-lg font-semibold text-foreground">설정</h3>
+          <button onClick={onClose} className="text-muted hover:text-foreground">
             <X size={20} />
           </button>
         </div>
 
         {/* 성별 선택 */}
         <div className="mb-6">
-          <label className="block text-sm font-medium mb-3">성별</label>
+          <label className="block text-sm font-medium mb-3 text-foreground">
+            성별
+          </label>
           <div className="flex gap-3">
             <button
               onClick={() => onGenderChange("male")}
-              className={`flex-1 p-3 rounded-lg border-2 transition-all ${
+              className={`flex-1 p-3 rounded-lg border transition-colors ${
                 gender === "male"
-                  ? "border-blue-500 bg-blue-50 text-blue-700"
-                  : "border-gray-200 hover:border-gray-300"
+                  ? "border-accent bg-accent/5 text-accent"
+                  : "border-border hover:bg-gray-50"
               }`}
             >
               <div className="text-2xl mb-1">👨</div>
@@ -100,10 +99,10 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
             </button>
             <button
               onClick={() => onGenderChange("female")}
-              className={`flex-1 p-3 rounded-lg border-2 transition-all ${
+              className={`flex-1 p-3 rounded-lg border transition-colors ${
                 gender === "female"
-                  ? "border-pink-500 bg-pink-50 text-pink-700"
-                  : "border-gray-200 hover:border-gray-300"
+                  ? "border-accent bg-accent/5 text-accent"
+                  : "border-border hover:bg-gray-50"
               }`}
             >
               <div className="text-2xl mb-1">👩</div>
@@ -114,17 +113,17 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
 
         {/* 단백질 목적 설정 */}
         <div className="mb-6">
-          <label className="block text-sm font-medium mb-3">
+          <label className="block text-sm font-medium mb-3 text-foreground">
             단백질 섭취 목적
           </label>
           <div className="space-y-3">
             {Object.entries(proteinGoals[gender]).map(([key, goal]) => (
               <div
                 key={key}
-                className={`p-3 rounded-lg border-2 cursor-pointer transition-all ${
+                className={`p-3 rounded-lg border cursor-pointer transition-colors ${
                   proteinGoal === key
-                    ? "border-blue-500 bg-blue-50"
-                    : "border-gray-200 hover:border-gray-300"
+                    ? "border-accent bg-accent/5"
+                    : "border-border hover:bg-gray-50"
                 }`}
                 onClick={() => onProteinGoalChange(key)}
               >
@@ -132,17 +131,19 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                   <div className="flex items-center gap-2">
                     <span className="text-lg">{goal.icon}</span>
                     <div>
-                      <div className="font-medium">{goal.name}</div>
-                      <div className="text-xs text-gray-600">
+                      <div className="font-medium text-foreground">
+                        {goal.name}
+                      </div>
+                      <div className="text-xs text-muted">
                         {goal.description}
                       </div>
                     </div>
                   </div>
                   <div className="text-right">
-                    <div className="text-xs text-gray-500">
+                    <div className="text-xs text-muted">
                       일반: {goal.normal}g/kg
                     </div>
-                    <div className="text-xs text-gray-500">
+                    <div className="text-xs text-muted">
                       근력: {goal.workout}g/kg
                     </div>
                   </div>
@@ -154,7 +155,9 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
 
         {/* 체중 설정 */}
         <div className="mb-6">
-          <label className="block text-sm font-medium mb-2">체중 (kg)</label>
+          <label className="block text-sm font-medium mb-2 text-foreground">
+            체중 (kg)
+          </label>
           <input
             type="number"
             value={tempBodyWeight}
@@ -165,7 +168,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                 onBodyWeightSubmit();
               }
             }}
-            className="w-full p-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+            className="w-full p-2 border border-border rounded-lg focus:ring-2 focus:ring-accent focus:border-transparent"
             placeholder="체중을 입력하세요"
             min="1"
             step="0.1"
@@ -173,37 +176,39 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
 
           {/* 현재 설정에 따른 단백질 목표량 표시 */}
           <div className="mt-2 p-3 bg-gray-50 rounded-lg">
-            <div className="text-sm font-medium text-gray-700 mb-1">
+            <div className="text-sm font-medium text-foreground mb-1">
               {getProteinMultipliers().icon} 현재 설정:{" "}
               {getProteinMultipliers().name}
             </div>
-            <div className="text-xs text-gray-600 mb-2">
+            <div className="text-xs text-muted mb-2">
               {getProteinMultipliers().description}
             </div>
             <div className="flex justify-between text-sm">
-              <span className="text-gray-600">
+              <span className="text-muted">
                 일반:{" "}
-                <strong>
+                <strong className="text-foreground">
                   {(bodyWeight * getProteinMultipliers().normal).toFixed(0)}g
                 </strong>
               </span>
-              <span className="text-gray-600">
+              <span className="text-muted">
                 근력:{" "}
-                <strong>
+                <strong className="text-foreground">
                   {(bodyWeight * getProteinMultipliers().workout).toFixed(0)}g
                 </strong>
               </span>
             </div>
           </div>
 
-          <p className="text-xs text-blue-600 mt-2">
+          <p className="text-xs text-muted mt-2">
             💡 입력 후 엔터키를 누르거나 다른 곳을 클릭하면 저장됩니다.
           </p>
         </div>
 
         {/* 나만의 음식 관리 */}
         <div className="mb-6">
-          <h4 className="font-medium mb-3">나만의 음식 관리</h4>
+          <h4 className="font-medium mb-3 text-foreground">
+            나만의 음식 관리
+          </h4>
 
           {/* 새 음식 추가 */}
           <div className="flex gap-2 mb-3">
@@ -214,7 +219,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
               onChange={(e) =>
                 onNewFoodChange({ ...newFood, name: e.target.value })
               }
-              className="flex-1 p-2 text-sm border rounded-lg focus:ring-2 focus:ring-blue-500"
+              className="flex-1 p-2 text-sm border border-border rounded-lg focus:ring-2 focus:ring-accent"
             />
             <input
               type="number"
@@ -224,12 +229,12 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
               onChange={(e) =>
                 onNewFoodChange({ ...newFood, protein: e.target.value })
               }
-              className="w-24 p-2 text-sm border rounded-lg focus:ring-2 focus:ring-blue-500"
+              className="w-24 p-2 text-sm border border-border rounded-lg focus:ring-2 focus:ring-accent"
             />
             <button
               onClick={onAddFood}
               disabled={!newFood.name || !newFood.protein}
-              className="px-3 py-2 bg-green-500 text-white rounded-lg hover:bg-green-600 disabled:bg-gray-300 disabled:cursor-not-allowed"
+              className="px-3 py-2 bg-accent text-white rounded-lg hover:bg-accent-hover disabled:bg-gray-200 disabled:text-gray-400 disabled:cursor-not-allowed"
             >
               <Plus size={16} />
             </button>
@@ -256,7 +261,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                             onUpdateFood(foodItem.id, { name: target.value });
                           }
                         }}
-                        className="flex-1 p-1 text-xs border rounded focus:ring-1 focus:ring-blue-500"
+                        className="flex-1 p-1 text-xs border border-border rounded focus:ring-1 focus:ring-accent"
                       />
                       <input
                         type="number"
@@ -270,11 +275,11 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                             });
                           }
                         }}
-                        className="w-16 p-1 text-xs border rounded focus:ring-1 focus:ring-blue-500"
+                        className="w-16 p-1 text-xs border border-border rounded focus:ring-1 focus:ring-accent"
                       />
                       <button
                         onClick={onStopEditing}
-                        className="text-green-500 hover:text-green-700"
+                        className="text-success hover:text-green-700"
                       >
                         <Check size={14} />
                       </button>
@@ -282,19 +287,19 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                   ) : (
                     // 보기 모드
                     <>
-                      <span className="flex-1">
+                      <span className="flex-1 text-foreground">
                         {foodItem.name} ({foodItem.protein}g)
                       </span>
                       <div className="flex gap-1">
                         <button
                           onClick={() => onEditFood(foodItem.id)}
-                          className="text-blue-500 hover:text-blue-700 p-1"
+                          className="text-muted hover:text-accent p-1"
                         >
                           <Edit size={12} />
                         </button>
                         <button
                           onClick={() => onDeleteFood(foodItem.id)}
-                          className="text-red-500 hover:text-red-700 p-1"
+                          className="text-muted hover:text-danger p-1"
                         >
                           <Trash2 size={12} />
                         </button>
@@ -307,7 +312,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
 
           {foodDatabase.filter((foodItem) => !foodItem.is_default).length ===
             0 && (
-            <p className="text-sm text-gray-500 text-center py-4">
+            <p className="text-sm text-muted text-center py-4">
               아직 추가한 음식이 없습니다.
             </p>
           )}
@@ -317,7 +322,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
         <div className="flex justify-end">
           <button
             onClick={onClose}
-            className="px-4 py-2 bg-gray-500 text-white rounded-lg hover:bg-gray-600"
+            className="px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200"
           >
             닫기
           </button>
