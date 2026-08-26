@@ -122,14 +122,20 @@ export const DailyRecordPanel: React.FC<DailyRecordPanelProps> = ({
     setProteinPer100g((prev) => ({ ...prev, [meal]: suggestion.proteinPer100g }));
     setShowSuggestions((prev) => ({ ...prev, [meal]: false }));
     setLookupStatus((prev) => ({ ...prev, [meal]: "idle" }));
-    onDirectInputDataChange((prev) => ({
-      ...prev,
-      [meal]: {
-        ...prev[meal],
-        name: suggestion.name,
-        protein: computeProtein(suggestion.proteinPer100g, prev[meal].amount),
-      },
-    }));
+    onDirectInputDataChange((prev) => {
+      // 섭취량을 아직 입력하지 않았다면 100g을 기본값으로 채워서
+      // 선택 직후에도 단백질량이 계산되고 추가 버튼이 바로 활성화되게 함
+      const amount = prev[meal].amount || "100";
+      return {
+        ...prev,
+        [meal]: {
+          ...prev[meal],
+          name: suggestion.name,
+          amount,
+          protein: computeProtein(suggestion.proteinPer100g, amount),
+        },
+      };
+    });
   };
 
   const handleAmountChange = (meal: MealType, amount: string) => {
