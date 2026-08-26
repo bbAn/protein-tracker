@@ -76,13 +76,17 @@ const ProteinTracker: React.FC = () => {
   const food = useFood(auth.user);
   const dailyRecords = useDailyRecords(auth.user, food.foodDatabase);
 
-  // 사용자 데이터 로드
+  // 사용자 데이터 로드 (달력 기록은 현재 보고 있는 달만 로드)
   useEffect(() => {
     if (auth.user) {
       Promise.all([
         bodyWeight.loadUserProfile(auth.user.id),
         food.loadFoodDatabase(auth.user.id),
-        dailyRecords.loadDailyRecords(auth.user.id),
+        dailyRecords.loadMonth(
+          auth.user.id,
+          dateState.current.getFullYear(),
+          dateState.current.getMonth()
+        ),
       ]);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -91,6 +95,13 @@ const ProteinTracker: React.FC = () => {
   // 날짜 관련 핸들러
   const handleDateChange = (newDate: Date) => {
     setDateState((prev) => ({ ...prev, current: newDate }));
+    if (auth.user) {
+      dailyRecords.loadMonth(
+        auth.user.id,
+        newDate.getFullYear(),
+        newDate.getMonth()
+      );
+    }
   };
 
   const handleDateSelect = (dateString: string) => {
@@ -218,6 +229,7 @@ const ProteinTracker: React.FC = () => {
             dailyRecords={dailyRecords.dailyRecords}
             bodyWeight={bodyWeight.bodyWeight}
             getTargetProtein={bodyWeight.getTargetProtein}
+            isLoading={dailyRecords.isLoadingMonth}
             onDateChange={handleDateChange}
             onDateSelect={handleDateSelect}
           />

@@ -9,6 +9,7 @@ interface CalendarViewProps {
   dailyRecords: Record<string, DayRecord>;
   bodyWeight: number;
   getTargetProtein: (hasCardio: boolean, hasStrength: boolean) => number;
+  isLoading?: boolean;
   onDateChange: (date: Date) => void;
   onDateSelect: (dateString: string) => void;
 }
@@ -18,14 +19,18 @@ export const CalendarView: React.FC<CalendarViewProps> = ({
   selectedDate,
   dailyRecords,
   getTargetProtein,
+  isLoading,
   onDateChange,
   onDateSelect,
 }) => {
   return (
     <div className="lg:col-span-2 bg-surface rounded-xl border border-border p-6">
       <div className="flex justify-between items-center mb-6">
-        <h2 className="text-lg font-semibold text-foreground">
+        <h2 className="text-lg font-semibold text-foreground flex items-center gap-2">
           {currentDate.getFullYear()}년 {currentDate.getMonth() + 1}월
+          {isLoading && (
+            <span className="w-3.5 h-3.5 border-2 border-border border-t-accent rounded-full animate-spin" />
+          )}
         </h2>
         <div className="flex gap-2">
           <button

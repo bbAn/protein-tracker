@@ -10,7 +10,11 @@ import {
 import {
   dateKeyToDateString,
   dateStringToDateKey,
+  getKoreanDateString,
 } from "../utils/dateUtils";
+
+const monthKey = (year: number, month: number) =>
+  `${year}-${String(month + 1).padStart(2, "0")}`;
 
 export const useDailyRecords = (
   user: SupabaseUser | null,
@@ -20,6 +24,8 @@ export const useDailyRecords = (
     {}
   );
   const [userProfileId, setUserProfileId] = useState<string | null>(null);
+  const [loadedMonths, setLoadedMonths] = useState<Set<string>>(new Set());
+  const [isLoadingMonth, setIsLoadingMonth] = useState(false);
 
   // user_profiles의 id 가져오기 (daily_records의 user_id로 사용)
   const getUserProfileId = useCallback(
@@ -45,70 +51,71 @@ export const useDailyRecords = (
     [userProfileId]
   );
 
-  // 일일 기록 로드
-  const loadDailyRecords = useCallback(
-    async (authUserId: string) => {
+  // 특정 달의 기록만 로드 (이미 로드한 달이면 재요청하지 않음)
+  const loadMonth = useCallback(
+    async (authUserId: string, year: number, month: number) => {
+      const key = monthKey(year, month);
+      if (loadedMonths.has(key)) return;
+
+      setIsLoadingMonth(true);
       try {
-        // user_profiles의 id 가져오기
         const profileId = await getUserProfileId(authUserId);
         if (!profileId) {
           console.error("User profile not found");
           return;
         }
 
+        const monthStart = getKoreanDateString(new Date(year, month, 1));
+        const monthEnd = getKoreanDateString(new Date(year, month + 1, 1));
+
         const { data: records, error: recordsError } = await supabase
           .from("daily_records")
           .select("*")
           .eq("user_id", profileId)
+          .gte("record_date", monthStart)
+          .lt("record_date", monthEnd)
           .order("record_date", { ascending: false });
 
-        console.log("📊 기록 조회 결과:", {
+        console.log(`📊 ${key} 기록 조회 결과:`, {
           records: records?.length,
           recordsError,
         });
 
         if (records) {
-          const recordsMap: Record<string, DayRecord> = {};
-          records.forEach((record: DailyRecord) => {
-            const dateKey = dateStringToDateKey(record.record_date);
+          setDailyRecords((prev) => {
+            const recordsMap: Record<string, DayRecord> = { ...prev };
+            records.forEach((record: DailyRecord) => {
+              const dateKey = dateStringToDateKey(record.record_date);
 
-            if (!recordsMap[dateKey]) {
-              recordsMap[dateKey] = {
-                breakfast: [],
-                lunch: [],
-                dinner: [],
-                hasCardio: record.has_cardio || false,
-                hasStrength: record.has_strength || false,
-              };
-            }
-            recordsMap[dateKey][record.meal_type].push({
-              id: record.id,
-              name: record.food_name,
-              protein: record.protein_amount,
+              if (!recordsMap[dateKey]) {
+                recordsMap[dateKey] = {
+                  breakfast: [],
+                  lunch: [],
+                  dinner: [],
+                  hasCardio: record.has_cardio || false,
+                  hasStrength: record.has_strength || false,
+                };
+              }
+              recordsMap[dateKey][record.meal_type].push({
+                id: record.id,
+                name: record.food_name,
+                protein: record.protein_amount,
+              });
+              recordsMap[dateKey].hasCardio = record.has_cardio;
+              recordsMap[dateKey].hasStrength = record.has_strength;
             });
-            // 각 기록에서 운동 여부를 업데이트 (가장 마지막 기록 기준)
-            recordsMap[dateKey].hasCardio = record.has_cardio;
-            recordsMap[dateKey].hasStrength = record.has_strength;
+            return recordsMap;
           });
-
-          console.log("📊 로드된 날짜별 기록:");
-          Object.keys(recordsMap).forEach((dateKey) => {
-            const dayData = recordsMap[dateKey];
-            const totalItems = [
-              ...dayData.breakfast,
-              ...dayData.lunch,
-              ...dayData.dinner,
-            ].length;
-            console.log(`  ${dateKey}: ${totalItems}개 항목`);
-          });
-
-          setDailyRecords(recordsMap);
         }
+
+        setLoadedMonths((prev) => new Set(prev).add(key));
       } catch (error) {
-        console.error("💥 사용자 데이터 로드 실패:", error);
+        console.error("💥 월별 기록 로드 실패:", error);
+      } finally {
+        setIsLoadingMonth(false);
       }
     },
-    [getUserProfileId]
+    [getUserProfileId, loadedMonths]
   );
 
   // 특정 날짜의 기록 가져오기
@@ -390,13 +397,14 @@ export const useDailyRecords = (
   return {
     // 상태
     dailyRecords,
+    isLoadingMonth,
 
     // 유틸리티
     getDayRecord,
     getTotalProtein,
 
     // 액션
-    loadDailyRecords,
+    loadMonth,
     addFoodToMeal,
     addDirectFoodToMeal,
     removeFoodFromMeal,
