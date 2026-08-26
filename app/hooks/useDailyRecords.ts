@@ -1,4 +1,4 @@
-import { useCallback, useState } from "react";
+import { useCallback, useRef, useState } from "react";
 import { supabase } from "../../lib/supabase";
 import {
   DailyRecord,
@@ -24,7 +24,9 @@ export const useDailyRecords = (
     {}
   );
   const [userProfileId, setUserProfileId] = useState<string | null>(null);
-  const [loadedMonths, setLoadedMonths] = useState<Set<string>>(new Set());
+  // state 대신 ref: 동기적으로 즉시 반영돼야 개발 모드 StrictMode의 이중 effect
+  // 호출처럼 짧은 시간 안에 같은 달이 두 번 요청되는 것을 막을 수 있음
+  const loadedMonthsRef = useRef<Set<string>>(new Set());
   const [isLoadingMonth, setIsLoadingMonth] = useState(false);
 
   // user_profiles의 id 가져오기 (daily_records의 user_id로 사용)
@@ -55,13 +57,15 @@ export const useDailyRecords = (
   const loadMonth = useCallback(
     async (authUserId: string, year: number, month: number) => {
       const key = monthKey(year, month);
-      if (loadedMonths.has(key)) return;
+      if (loadedMonthsRef.current.has(key)) return;
+      loadedMonthsRef.current.add(key);
 
       setIsLoadingMonth(true);
       try {
         const profileId = await getUserProfileId(authUserId);
         if (!profileId) {
           console.error("User profile not found");
+          loadedMonthsRef.current.delete(key);
           return;
         }
 
@@ -107,15 +111,15 @@ export const useDailyRecords = (
             return recordsMap;
           });
         }
-
-        setLoadedMonths((prev) => new Set(prev).add(key));
       } catch (error) {
         console.error("💥 월별 기록 로드 실패:", error);
+        // 실패했으면 다시 시도할 수 있게 로드 완료 표시를 되돌림
+        loadedMonthsRef.current.delete(key);
       } finally {
         setIsLoadingMonth(false);
       }
     },
-    [getUserProfileId, loadedMonths]
+    [getUserProfileId]
   );
 
   // 특정 날짜의 기록 가져오기
