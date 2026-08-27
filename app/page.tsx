@@ -7,6 +7,7 @@ import { useAuth } from "./hooks/useAuth";
 import { useBodyWeight } from "./hooks/useBodyWeight";
 import { useDailyRecords } from "./hooks/useDailyRecords";
 import { useFood } from "./hooks/useFood";
+import { useSupplementDatabase } from "./hooks/useSupplementDatabase";
 
 // Components
 import { ProteinGoal } from "@/app/types";
@@ -75,6 +76,7 @@ const ProteinTracker: React.FC = () => {
   const bodyWeight = useBodyWeight(auth.user);
   const food = useFood(auth.user);
   const dailyRecords = useDailyRecords(auth.user, food.foodDatabase);
+  const supplementDb = useSupplementDatabase(auth.user);
 
   // 사용자 데이터 로드 (달력 기록은 현재 보고 있는 달만 로드)
   useEffect(() => {
@@ -82,6 +84,7 @@ const ProteinTracker: React.FC = () => {
       Promise.all([
         bodyWeight.loadUserProfile(auth.user.id),
         food.loadFoodDatabase(auth.user.id),
+        supplementDb.loadSupplementDatabase(auth.user.id),
         dailyRecords.loadMonth(
           auth.user.id,
           dateState.current.getFullYear(),
@@ -253,6 +256,7 @@ const ProteinTracker: React.FC = () => {
             onRemoveFood={(meal, foodId) =>
               dailyRecords.removeFoodFromMeal(meal, foodId, dateState.selected)
             }
+            supplementDatabase={supplementDb.supplementDatabase}
             onAddSupplement={(meal, name, note) =>
               dailyRecords.addSupplement(meal, name, note, dateState.selected)
             }
@@ -296,6 +300,15 @@ const ProteinTracker: React.FC = () => {
           onUpdateFood={food.updateFood}
           onDeleteFood={food.deleteFood}
           onStopEditing={() => food.setEditingFood(null)}
+          supplementDatabase={supplementDb.supplementDatabase}
+          newSupplement={supplementDb.newSupplement}
+          editingSupplement={supplementDb.editingSupplement}
+          onNewSupplementChange={supplementDb.setNewSupplement}
+          onAddSupplement={supplementDb.addNewSupplement}
+          onEditSupplement={supplementDb.setEditingSupplement}
+          onUpdateSupplement={supplementDb.updateSupplement}
+          onDeleteSupplement={supplementDb.deleteSupplement}
+          onStopEditingSupplement={() => supplementDb.setEditingSupplement(null)}
         />
       </div>
     </div>

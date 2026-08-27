@@ -65,6 +65,14 @@ export interface DailyRecord {
   created_at: string;
 }
 
+export interface SupplementDatabaseItem {
+  id: number;
+  user_id?: string;
+  name: string;
+  note?: string;
+  created_at?: string;
+}
+
 export interface SupplementRecord {
   id: number;
   user_id: string;

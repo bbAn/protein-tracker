@@ -6,6 +6,7 @@ import {
   FoodItem,
   MealType,
   NutritionLookupResult,
+  SupplementDatabaseItem,
 } from "../../types";
 
 interface DirectInputState {
@@ -48,6 +49,7 @@ interface DailyRecordPanelProps {
     meal: "breakfast" | "lunch" | "dinner"
   ) => void;
   onSearchNutrition: (foodName: string) => Promise<NutritionLookupResult[]>;
+  supplementDatabase: SupplementDatabaseItem[];
   onAddSupplement: (meal: MealType, name: string, note: string) => void;
   onRemoveSupplement: (meal: MealType, supplementId: number) => void;
 }
@@ -69,6 +71,7 @@ export const DailyRecordPanel: React.FC<DailyRecordPanelProps> = ({
   onAddDirectFood,
   onDirectInputKeyDown,
   onSearchNutrition,
+  supplementDatabase,
   onAddSupplement,
   onRemoveSupplement,
 }) => {
@@ -79,6 +82,10 @@ export const DailyRecordPanel: React.FC<DailyRecordPanelProps> = ({
     lunch: { name: "", note: "" },
     dinner: { name: "", note: "" },
   });
+  const [supplementInputMode, setSupplementInputMode] = useState<
+    Record<MealType, boolean>
+  >({ breakfast: false, lunch: false, dinner: false });
+
   const handleAddSupplement = (meal: MealType) => {
     const input = supplementInput[meal];
     if (!input.name.trim()) return;
@@ -448,7 +455,41 @@ export const DailyRecordPanel: React.FC<DailyRecordPanelProps> = ({
                   </div>
                 ))}
               </div>
-              <div className="flex gap-2">
+              <div className="flex gap-2 mb-2">
+                <button
+                  onClick={() =>
+                    setSupplementInputMode((prev) => ({
+                      ...prev,
+                      [meal]: false,
+                    }))
+                  }
+                  className={`px-3 py-1 text-xs rounded-lg ${
+                    !supplementInputMode[meal]
+                      ? "bg-accent text-white"
+                      : "bg-muted-bg text-foreground hover:bg-muted-bg-hover"
+                  }`}
+                >
+                  목록선택
+                </button>
+                <button
+                  onClick={() =>
+                    setSupplementInputMode((prev) => ({
+                      ...prev,
+                      [meal]: true,
+                    }))
+                  }
+                  className={`px-3 py-1 text-xs rounded-lg ${
+                    supplementInputMode[meal]
+                      ? "bg-accent text-white"
+                      : "bg-muted-bg text-foreground hover:bg-muted-bg-hover"
+                  }`}
+                >
+                  직접입력
+                </button>
+              </div>
+
+              {supplementInputMode[meal] ? (
+                <div className="flex gap-2">
                   <input
                     type="text"
                     placeholder="품목명 (예: 구기자환)"
@@ -493,6 +534,32 @@ export const DailyRecordPanel: React.FC<DailyRecordPanelProps> = ({
                     추가
                   </button>
                 </div>
+              ) : (
+                <select
+                  onChange={(e) => {
+                    if (e.target.value) {
+                      const item = supplementDatabase.find(
+                        (s) => s.id === parseInt(e.target.value)
+                      );
+                      if (item) {
+                        onAddSupplement(meal, item.name, item.note ?? "");
+                      }
+                      e.target.value = "";
+                    }
+                  }}
+                  className="w-full p-2 text-sm border border-border rounded-lg"
+                >
+                  <option value="">영양제·건강식품 추가...</option>
+                  {supplementDatabase
+                    .sort((a, b) => a.name.localeCompare(b.name))
+                    .map((item) => (
+                      <option key={item.id} value={item.id}>
+                        {item.name}
+                        {item.note ? ` (${item.note})` : ""}
+                      </option>
+                    ))}
+                </select>
+              )}
             </div>
           </div>
         );
