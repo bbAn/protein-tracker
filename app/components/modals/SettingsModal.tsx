@@ -45,17 +45,18 @@ interface SettingsModalProps {
   onDeleteFood: (id: number) => void;
   onStopEditing: () => void;
   supplementDatabase: SupplementDatabaseItem[];
-  newSupplement: { name: string; note: string };
+  newSupplement: { name: string; quantity: string; dosage: string };
   editingSupplement: number | null;
   onNewSupplementChange: (newSupplement: {
     name: string;
-    note: string;
+    quantity: string;
+    dosage: string;
   }) => void;
   onAddSupplement: () => void;
   onEditSupplement: (id: number) => void;
   onUpdateSupplement: (
     id: number,
-    updates: { name?: string; note?: string }
+    updates: { name?: string; quantity?: string; dosage?: string }
   ) => void;
   onDeleteSupplement: (id: number) => void;
   onStopEditingSupplement: () => void;
@@ -354,21 +355,39 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
           <div className='flex gap-2 mb-3'>
             <input
               type='text'
-              placeholder='품목명 (예: 구기자환)'
+              placeholder='품목명'
               value={newSupplement.name}
               onChange={(e) =>
-                onNewSupplementChange({ ...newSupplement, name: e.target.value })
+                onNewSupplementChange({
+                  ...newSupplement,
+                  name: e.target.value,
+                })
               }
               className='flex-1 p-2 text-sm border border-border rounded-lg focus:ring-2 focus:ring-accent'
             />
             <input
               type='text'
-              placeholder='수량/용량 (예: 20알)'
-              value={newSupplement.note}
+              placeholder='수량'
+              value={newSupplement.quantity}
               onChange={(e) =>
-                onNewSupplementChange({ ...newSupplement, note: e.target.value })
+                onNewSupplementChange({
+                  ...newSupplement,
+                  quantity: e.target.value,
+                })
               }
-              className='w-28 p-2 text-sm border border-border rounded-lg focus:ring-2 focus:ring-accent'
+              className='w-20 p-2 text-sm border border-border rounded-lg focus:ring-2 focus:ring-accent'
+            />
+            <input
+              type='text'
+              placeholder='용량'
+              value={newSupplement.dosage}
+              onChange={(e) =>
+                onNewSupplementChange({
+                  ...newSupplement,
+                  dosage: e.target.value,
+                })
+              }
+              className='w-20 p-2 text-sm border border-border rounded-lg focus:ring-2 focus:ring-accent'
             />
             <button
               onClick={onAddSupplement}
@@ -381,7 +400,11 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
 
           {/* 내가 추가한 영양제 목록 */}
           <div className='space-y-2 max-h-40 overflow-y-auto'>
-            {supplementDatabase.map((item) => (
+            {supplementDatabase.map((item) => {
+              const detail = [item.quantity, item.dosage]
+                .filter(Boolean)
+                .join(' · ');
+              return (
                 <div
                   key={item.id}
                   className='flex justify-between items-center text-sm bg-muted-bg p-2 rounded-lg'
@@ -402,14 +425,31 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                       />
                       <input
                         type='text'
-                        defaultValue={item.note}
+                        placeholder='수량'
+                        defaultValue={item.quantity}
                         onKeyDown={(e) => {
                           if (e.key === 'Enter') {
                             const target = e.target as HTMLInputElement;
-                            onUpdateSupplement(item.id, { note: target.value });
+                            onUpdateSupplement(item.id, {
+                              quantity: target.value,
+                            });
                           }
                         }}
-                        className='w-20 p-1 text-xs border border-border rounded focus:ring-1 focus:ring-accent'
+                        className='w-14 p-1 text-xs border border-border rounded focus:ring-1 focus:ring-accent'
+                      />
+                      <input
+                        type='text'
+                        placeholder='용량'
+                        defaultValue={item.dosage}
+                        onKeyDown={(e) => {
+                          if (e.key === 'Enter') {
+                            const target = e.target as HTMLInputElement;
+                            onUpdateSupplement(item.id, {
+                              dosage: target.value,
+                            });
+                          }
+                        }}
+                        className='w-14 p-1 text-xs border border-border rounded focus:ring-1 focus:ring-accent'
                       />
                       <button
                         onClick={onStopEditingSupplement}
@@ -423,8 +463,8 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                     <>
                       <span className='flex-1 text-foreground'>
                         {item.name}
-                        {item.note && (
-                          <span className='text-muted'> · {item.note}</span>
+                        {detail && (
+                          <span className='text-muted'> · {detail}</span>
                         )}
                       </span>
                       <div className='flex gap-1'>
@@ -444,8 +484,8 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                     </>
                   )}
                 </div>
-                </div>
-            ))}
+              );
+            })}
           </div>
 
           {supplementDatabase.length === 0 && (

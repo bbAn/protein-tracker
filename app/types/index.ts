@@ -69,7 +69,8 @@ export interface SupplementDatabaseItem {
   id: number;
   user_id?: string;
   name: string;
-  note?: string;
+  quantity?: string;
+  dosage?: string;
   created_at?: string;
 }
 

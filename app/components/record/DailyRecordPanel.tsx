@@ -542,7 +542,10 @@ export const DailyRecordPanel: React.FC<DailyRecordPanelProps> = ({
                         (s) => s.id === parseInt(e.target.value)
                       );
                       if (item) {
-                        onAddSupplement(meal, item.name, item.note ?? "");
+                        const detail = [item.quantity, item.dosage]
+                          .filter(Boolean)
+                          .join(" · ");
+                        onAddSupplement(meal, item.name, detail);
                       }
                       e.target.value = "";
                     }
@@ -552,12 +555,17 @@ export const DailyRecordPanel: React.FC<DailyRecordPanelProps> = ({
                   <option value="">영양제·건강식품 추가...</option>
                   {supplementDatabase
                     .sort((a, b) => a.name.localeCompare(b.name))
-                    .map((item) => (
-                      <option key={item.id} value={item.id}>
-                        {item.name}
-                        {item.note ? ` (${item.note})` : ""}
-                      </option>
-                    ))}
+                    .map((item) => {
+                      const detail = [item.quantity, item.dosage]
+                        .filter(Boolean)
+                        .join(" · ");
+                      return (
+                        <option key={item.id} value={item.id}>
+                          {item.name}
+                          {detail ? ` (${detail})` : ""}
+                        </option>
+                      );
+                    })}
                 </select>
               )}
             </div>

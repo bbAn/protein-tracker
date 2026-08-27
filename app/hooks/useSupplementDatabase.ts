@@ -11,8 +11,9 @@ export const useSupplementDatabase = (user: SupabaseUser | null) => {
   );
   const [newSupplement, setNewSupplement] = useState<{
     name: string;
-    note: string;
-  }>({ name: "", note: "" });
+    quantity: string;
+    dosage: string;
+  }>({ name: "", quantity: "", dosage: "" });
   const [userProfileId, setUserProfileId] = useState<string | null>(null);
 
   // user_profiles의 id 가져오기
@@ -92,7 +93,8 @@ export const useSupplementDatabase = (user: SupabaseUser | null) => {
         .insert({
           user_id: profileId,
           name: newSupplement.name,
-          note: newSupplement.note || null,
+          quantity: newSupplement.quantity || null,
+          dosage: newSupplement.dosage || null,
         })
         .select()
         .single();
@@ -104,7 +106,7 @@ export const useSupplementDatabase = (user: SupabaseUser | null) => {
       }
 
       setSupplementDatabase([...supplementDatabase, data]);
-      setNewSupplement({ name: "", note: "" });
+      setNewSupplement({ name: "", quantity: "", dosage: "" });
       return true;
     } catch (error) {
       console.error("❌ 영양제 추가 실패:", error);
