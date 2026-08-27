@@ -107,15 +107,19 @@ export const CalendarView: React.FC<CalendarViewProps> = ({
                 <div className="text-sm font-medium text-foreground">
                   {date.getDate()}
                 </div>
-                {dayTotal > 0 && (
+                {(dayTotal > 0 ||
+                  dayRecord.hasCardio ||
+                  dayRecord.hasStrength) && (
                   <div className="text-xs">
-                    <div
-                      className={`text-center ${
-                        dayTotal >= dayTarget ? "text-success" : "text-muted"
-                      }`}
-                    >
-                      {dayTotal.toFixed(0)}g
-                    </div>
+                    {dayTotal > 0 && (
+                      <div
+                        className={`text-center ${
+                          dayTotal >= dayTarget ? "text-success" : "text-muted"
+                        }`}
+                      >
+                        {dayTotal.toFixed(0)}g
+                      </div>
+                    )}
                     {(dayRecord.hasCardio || dayRecord.hasStrength) && (
                       <div className="flex gap-0.5 justify-center">
                         {dayRecord.hasCardio && (
