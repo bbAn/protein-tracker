@@ -173,7 +173,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                       일반: {goal.normal}g/kg
                     </div>
                     <div className='text-xs text-muted'>
-                      근력: {goal.workout}g/kg
+                      운동시: {goal.workout}g/kg
                     </div>
                   </div>
                 </div>
@@ -220,7 +220,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                 </strong>
               </span>
               <span className='text-muted'>
-                근력:{' '}
+                운동시:{' '}
                 <strong className='text-foreground'>
                   {(bodyWeight * getProteinMultipliers().workout).toFixed(0)}g
                 </strong>
