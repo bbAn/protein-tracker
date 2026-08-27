@@ -125,6 +125,8 @@ export const AuthForm: React.FC<AuthFormProps> = ({
             <ul className="text-sm text-muted space-y-1">
               <li>📅 달력으로 일일 기록 관리</li>
               <li>🍽️ 식사별 단백질 섭취량 추적</li>
+              <li>🔍 음식 검색 시 단백질량 자동 계산</li>
+              <li>💊 영양제·건강식품 기록</li>
               <li>💪 운동일/비운동일 구분</li>
               {/* <li>🧮 단백질 계산기</li> */}
               <li>📊 목표 달성률 시각화</li>
