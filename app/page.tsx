@@ -253,6 +253,16 @@ const ProteinTracker: React.FC = () => {
             onRemoveFood={(meal, foodId) =>
               dailyRecords.removeFoodFromMeal(meal, foodId, dateState.selected)
             }
+            onAddSupplement={(meal, name, note) =>
+              dailyRecords.addSupplement(meal, name, note, dateState.selected)
+            }
+            onRemoveSupplement={(meal, supplementId) =>
+              dailyRecords.removeSupplement(
+                meal,
+                supplementId,
+                dateState.selected
+              )
+            }
             onDirectInputModeChange={setDirectInputMode}
             onDirectInputDataChange={setDirectInputData}
             onAddDirectFood={addDirectFood}

@@ -6,10 +6,21 @@ export interface MealData {
   protein: number;
 }
 
+export interface SupplementItem {
+  id: number;
+  name: string;
+  note?: string;
+}
+
 export interface DayRecord {
   breakfast: MealData[];
   lunch: MealData[];
   dinner: MealData[];
+  supplements: {
+    breakfast: SupplementItem[];
+    lunch: SupplementItem[];
+    dinner: SupplementItem[];
+  };
   hasCardio: boolean;
   hasStrength: boolean;
 }
@@ -51,6 +62,16 @@ export interface DailyRecord {
   is_workout_day: boolean; // 하위 호환성을 위해 유지
   has_cardio: boolean;
   has_strength: boolean;
+  created_at: string;
+}
+
+export interface SupplementRecord {
+  id: number;
+  user_id: string;
+  record_date: string;
+  meal_type: "breakfast" | "lunch" | "dinner";
+  name: string;
+  note: string | null;
   created_at: string;
 }
 

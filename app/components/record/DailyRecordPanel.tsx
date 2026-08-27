@@ -1,7 +1,12 @@
 import { Trash2 } from "lucide-react";
 import React, { useRef, useState } from "react";
 import { MEAL_NAMES } from "../../constants";
-import { DayRecord, FoodItem, MealType, NutritionLookupResult } from "../../types";
+import {
+  DayRecord,
+  FoodItem,
+  MealType,
+  NutritionLookupResult,
+} from "../../types";
 
 interface DirectInputState {
   breakfast: boolean;
@@ -43,6 +48,8 @@ interface DailyRecordPanelProps {
     meal: "breakfast" | "lunch" | "dinner"
   ) => void;
   onSearchNutrition: (foodName: string) => Promise<NutritionLookupResult[]>;
+  onAddSupplement: (meal: MealType, name: string, note: string) => void;
+  onRemoveSupplement: (meal: MealType, supplementId: number) => void;
 }
 
 export const DailyRecordPanel: React.FC<DailyRecordPanelProps> = ({
@@ -62,7 +69,26 @@ export const DailyRecordPanel: React.FC<DailyRecordPanelProps> = ({
   onAddDirectFood,
   onDirectInputKeyDown,
   onSearchNutrition,
+  onAddSupplement,
+  onRemoveSupplement,
 }) => {
+  const [supplementInput, setSupplementInput] = useState<
+    Record<MealType, { name: string; note: string }>
+  >({
+    breakfast: { name: "", note: "" },
+    lunch: { name: "", note: "" },
+    dinner: { name: "", note: "" },
+  });
+  const handleAddSupplement = (meal: MealType) => {
+    const input = supplementInput[meal];
+    if (!input.name.trim()) return;
+    onAddSupplement(meal, input.name.trim(), input.note.trim());
+    setSupplementInput((prev) => ({
+      ...prev,
+      [meal]: { name: "", note: "" },
+    }));
+  };
+
   const [proteinPer100g, setProteinPer100g] = useState<
     Record<MealType, number | null>
   >({ breakfast: null, lunch: null, dinner: null });
@@ -395,6 +421,79 @@ export const DailyRecordPanel: React.FC<DailyRecordPanelProps> = ({
                   ))}
               </select>
             )}
+
+            {/* 영양제·건강식품 */}
+            <div className="mt-3">
+              <h5 className="text-xs font-medium text-muted mb-2">
+                영양제·건강식품
+              </h5>
+              <div className="space-y-1 mb-2">
+                {currentRecord.supplements[meal].map((item) => (
+                  <div
+                    key={item.id}
+                    className="flex justify-between items-center text-sm bg-muted-bg p-2 rounded-lg"
+                  >
+                    <span className="text-foreground">
+                      {item.name}
+                      {item.note && (
+                        <span className="text-muted"> · {item.note}</span>
+                      )}
+                    </span>
+                    <button
+                      onClick={() => onRemoveSupplement(meal, item.id)}
+                      className="text-muted hover:text-danger"
+                    >
+                      <Trash2 size={12} />
+                    </button>
+                  </div>
+                ))}
+              </div>
+              <div className="flex gap-2">
+                  <input
+                    type="text"
+                    placeholder="품목명 (예: 구기자환)"
+                    value={supplementInput[meal].name}
+                    onChange={(e) =>
+                      setSupplementInput((prev) => ({
+                        ...prev,
+                        [meal]: { ...prev[meal], name: e.target.value },
+                      }))
+                    }
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter") {
+                        e.preventDefault();
+                        handleAddSupplement(meal);
+                      }
+                    }}
+                    className="min-w-0 flex-1 p-2 text-sm border border-border rounded-lg focus:ring-2 focus:ring-accent"
+                  />
+                  <input
+                    type="text"
+                    placeholder="수량/용량 (예: 20알)"
+                    value={supplementInput[meal].note}
+                    onChange={(e) =>
+                      setSupplementInput((prev) => ({
+                        ...prev,
+                        [meal]: { ...prev[meal], note: e.target.value },
+                      }))
+                    }
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter") {
+                        e.preventDefault();
+                        handleAddSupplement(meal);
+                      }
+                    }}
+                    className="min-w-0 flex-1 p-2 text-sm border border-border rounded-lg focus:ring-2 focus:ring-accent"
+                  />
+                  <button
+                    onClick={() => handleAddSupplement(meal)}
+                    disabled={!supplementInput[meal].name.trim()}
+                    className="px-3 py-2 bg-muted-bg text-foreground rounded-lg hover:bg-muted-bg-hover disabled:text-muted disabled:cursor-not-allowed text-sm shrink-0"
+                  >
+                    추가
+                  </button>
+                </div>
+            </div>
           </div>
         );
       })}
