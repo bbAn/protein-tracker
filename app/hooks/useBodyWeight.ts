@@ -109,18 +109,18 @@ export const useBodyWeight = (user: SupabaseUser | null) => {
         !PROTEIN_GOALS[currentGender] ||
         !PROTEIN_GOALS[currentGender][currentGoal]
       ) {
-        return bodyWeight * (hasStrength ? 2.0 : 1.2);
+        return bodyWeight * (hasCardio || hasStrength ? 2.0 : 1.2);
       }
 
       const multipliers = PROTEIN_GOALS[currentGender][currentGoal];
 
-      if (hasStrength) {
+      if (hasCardio || hasStrength) {
         return bodyWeight * multipliers.workout;
       }
       return bodyWeight * multipliers.normal;
     } catch (error) {
       console.error("❌ 단백질 계산 오류:", error);
-      return bodyWeight * (hasStrength ? 2.0 : 1.2);
+      return bodyWeight * (hasCardio || hasStrength ? 2.0 : 1.2);
     }
   };
 
