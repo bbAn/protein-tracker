@@ -29,9 +29,16 @@ export const useAuth = () => {
     const checkUser = async (): Promise<void> => {
       try {
         // Supabase 세션 확인
+        // 로컬스토리지에 남아있는 세션이 꼬여 있으면 getSession()이 응답 없이
+        // 멈추는 경우가 있어, 일정 시간 안에 안 끝나면 로그인 화면으로
+        // 넘어가도록 타임아웃 안전장치를 둠
+        const timeout = new Promise<{ data: { session: null } }>((resolve) =>
+          setTimeout(() => resolve({ data: { session: null } }), 8000)
+        );
+
         const {
           data: { session },
-        } = await supabase.auth.getSession();
+        } = await Promise.race([supabase.auth.getSession(), timeout]);
 
         if (session?.user) {
           setUser(session.user);
