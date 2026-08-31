@@ -42,8 +42,13 @@ export async function GET(request: NextRequest) {
     const response = await fetch(apiUrl);
 
     if (!response.ok) {
+      const bodyText = await response.text();
       return NextResponse.json(
-        { error: '영양성분 조회 서비스 호출에 실패했습니다.' },
+        {
+          error: '영양성분 조회 서비스 호출에 실패했습니다.',
+          debugStatus: response.status,
+          debugBody: bodyText.slice(0, 500),
+        },
         { status: 502 }
       );
     }
@@ -52,7 +57,11 @@ export async function GET(request: NextRequest) {
 
     if (data.header.resultCode !== '00') {
       return NextResponse.json(
-        { error: '영양성분 조회 서비스 호출에 실패했습니다.' },
+        {
+          error: '영양성분 조회 서비스 호출에 실패했습니다.',
+          debugResultCode: data.header.resultCode,
+          debugResultMsg: data.header.resultMsg,
+        },
         { status: 502 }
       );
     }
@@ -90,9 +99,12 @@ export async function GET(request: NextRequest) {
     }
 
     return NextResponse.json({ results });
-  } catch {
+  } catch (error) {
     return NextResponse.json(
-      { error: '영양성분 조회 중 오류가 발생했습니다.' },
+      {
+        error: '영양성분 조회 중 오류가 발생했습니다.',
+        debugMessage: (error as Error)?.message,
+      },
       { status: 502 }
     );
   }
