@@ -82,24 +82,36 @@ export const useDailyRecords = (
         const monthStart = getKoreanDateString(new Date(year, month, 1));
         const monthEnd = getKoreanDateString(new Date(year, month + 1, 1));
 
+        // 네트워크 요청이 응답 없이 멈추면 로딩 스피너가 영원히 도는 걸
+        // 막기 위한 타임아웃 안전장치
+        const timeout = new Promise<never>((_, reject) =>
+          setTimeout(
+            () => reject(new Error("기록 조회 요청이 시간 초과됐습니다.")),
+            15000
+          )
+        );
+
         const [
           { data: records, error: recordsError },
           { data: supplementRecords, error: supplementError },
-        ] = await Promise.all([
-          supabase
-            .from("daily_records")
-            .select("*")
-            .eq("user_id", profileId)
-            .gte("record_date", monthStart)
-            .lt("record_date", monthEnd)
-            .order("record_date", { ascending: false }),
-          supabase
-            .from("supplement_records")
-            .select("*")
-            .eq("user_id", profileId)
-            .gte("record_date", monthStart)
-            .lt("record_date", monthEnd)
-            .order("record_date", { ascending: false }),
+        ] = await Promise.race([
+          Promise.all([
+            supabase
+              .from("daily_records")
+              .select("*")
+              .eq("user_id", profileId)
+              .gte("record_date", monthStart)
+              .lt("record_date", monthEnd)
+              .order("record_date", { ascending: false }),
+            supabase
+              .from("supplement_records")
+              .select("*")
+              .eq("user_id", profileId)
+              .gte("record_date", monthStart)
+              .lt("record_date", monthEnd)
+              .order("record_date", { ascending: false }),
+          ]),
+          timeout,
         ]);
 
         console.log(`📊 ${key} 기록 조회 결과:`, {
