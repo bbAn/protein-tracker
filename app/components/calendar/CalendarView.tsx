@@ -23,6 +23,11 @@ export const CalendarView: React.FC<CalendarViewProps> = ({
   onDateChange,
   onDateSelect,
 }) => {
+  const today = new Date();
+  const isCurrentMonth =
+    currentDate.getFullYear() === today.getFullYear() &&
+    currentDate.getMonth() === today.getMonth();
+
   return (
     <div className="lg:col-span-2 bg-surface rounded-xl border border-border p-6">
       <div className="flex justify-between items-center mb-6">
@@ -33,6 +38,14 @@ export const CalendarView: React.FC<CalendarViewProps> = ({
           )}
         </h2>
         <div className="flex gap-2">
+          {!isCurrentMonth && (
+            <button
+              onClick={() => onDateChange(new Date())}
+              className="px-3 py-1 text-sm bg-accent/10 text-accent rounded-lg hover:bg-accent/20"
+            >
+              이번 달
+            </button>
+          )}
           <button
             onClick={() =>
               onDateChange(
