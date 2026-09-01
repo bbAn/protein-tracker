@@ -1,5 +1,6 @@
 import { useCallback, useRef, useState } from "react";
 import { supabase } from "../../lib/supabase";
+import { withTimeout } from "../../lib/withTimeout";
 import {
   DailyRecord,
   DayRecord,
@@ -45,11 +46,15 @@ export const useDailyRecords = (
       if (userProfileId) return userProfileId;
 
       try {
-        const { data: profile } = await supabase
-          .from("user_profiles")
-          .select("id")
-          .eq("auth_id", authUserId)
-          .single();
+        const { data: profile } = await withTimeout(
+          supabase
+            .from("user_profiles")
+            .select("id")
+            .eq("auth_id", authUserId)
+            .single(),
+          8000,
+          "프로필 조회 요청이 시간 초과됐습니다."
+        );
 
         if (profile) {
           setUserProfileId(profile.id);

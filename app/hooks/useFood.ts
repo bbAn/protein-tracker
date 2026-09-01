@@ -1,5 +1,6 @@
 import { useCallback, useState } from "react";
 import { supabase } from "../../lib/supabase";
+import { withTimeout } from "../../lib/withTimeout";
 import { DEFAULT_FOODS } from "../constants";
 import { CalcResult, FoodItem, NutritionLookupResult, SupabaseUser } from "../types";
 
@@ -47,11 +48,15 @@ export const useFood = (user: SupabaseUser | null) => {
 
       try {
         console.log("🔍 프로필 ID 조회 시작:", authUserId);
-        const { data: profile, error } = await supabase
-          .from("user_profiles")
-          .select("id")
-          .eq("auth_id", authUserId)
-          .single();
+        const { data: profile, error } = await withTimeout(
+          supabase
+            .from("user_profiles")
+            .select("id")
+            .eq("auth_id", authUserId)
+            .single(),
+          8000,
+          "프로필 조회 요청이 시간 초과됐습니다."
+        );
 
         console.log("📝 프로필 ID 조회 결과:", { profile, error });
 

@@ -1,5 +1,6 @@
 import { useCallback, useState } from "react";
 import { supabase } from "../../lib/supabase";
+import { withTimeout } from "../../lib/withTimeout";
 import { SupabaseUser, SupplementDatabaseItem } from "../types";
 
 export const useSupplementDatabase = (user: SupabaseUser | null) => {
@@ -22,11 +23,15 @@ export const useSupplementDatabase = (user: SupabaseUser | null) => {
       if (userProfileId) return userProfileId;
 
       try {
-        const { data: profile, error } = await supabase
-          .from("user_profiles")
-          .select("id")
-          .eq("auth_id", authUserId)
-          .single();
+        const { data: profile, error } = await withTimeout(
+          supabase
+            .from("user_profiles")
+            .select("id")
+            .eq("auth_id", authUserId)
+            .single(),
+          8000,
+          "프로필 조회 요청이 시간 초과됐습니다."
+        );
 
         if (error) throw error;
 

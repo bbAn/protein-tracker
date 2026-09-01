@@ -1,5 +1,6 @@
 import { useCallback, useState } from "react";
 import { supabase } from "../../lib/supabase";
+import { withTimeout } from "../../lib/withTimeout";
 import { DEFAULT_BODY_WEIGHT, PROTEIN_GOALS } from "../constants";
 import { Gender, ProteinGoal, SupabaseUser } from "../types";
 
@@ -16,11 +17,15 @@ export const useBodyWeight = (user: SupabaseUser | null) => {
     try {
       console.log("👤 프로필 조회 시작:", userId);
 
-      const { data: profile, error: profileError } = await supabase
-        .from("user_profiles")
-        .select("*")
-        .eq("auth_id", userId)
-        .single();
+      const { data: profile, error: profileError } = await withTimeout(
+        supabase
+          .from("user_profiles")
+          .select("*")
+          .eq("auth_id", userId)
+          .single(),
+        8000,
+        "프로필 조회 요청이 시간 초과됐습니다."
+      );
 
       console.log("👤 프로필 조회 결과:", { profile, profileError });
 
