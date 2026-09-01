@@ -1,4 +1,5 @@
 import { useCallback, useState } from "react";
+import { showToast } from "../../lib/toast";
 import { supabase } from "../../lib/supabase";
 import { withTimeout } from "../../lib/withTimeout";
 import { DEFAULT_FOODS } from "../constants";
@@ -141,7 +142,7 @@ export const useFood = (user: SupabaseUser | null) => {
       setFoodDatabase([...foodDatabase, data]);
       setNewFood({ name: "", protein: "" });
 
-      alert("음식이 추가되었습니다!");
+      showToast("음식이 추가되었습니다!");
       return true;
     } catch (error) {
       console.error("❌ 음식 추가 실패:", error);

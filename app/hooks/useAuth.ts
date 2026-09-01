@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { showToast } from "../../lib/toast";
 import { supabase } from "../../lib/supabase";
 import { SupabaseUser, AuthMode } from "../types";
 import {
@@ -212,7 +213,7 @@ export const useAuth = () => {
         return false;
       }
 
-      alert("회원가입이 완료되었습니다!");
+      showToast("회원가입이 완료되었습니다!");
       setUsername("");
       setPassword("");
       setConfirmPassword("");
