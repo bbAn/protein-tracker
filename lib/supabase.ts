@@ -3,7 +3,16 @@ import { createClient } from "@supabase/supabase-js";
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
 const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!;
 
-export const supabase = createClient(supabaseUrl, supabaseAnonKey);
+export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
+  auth: {
+    // supabase-js가 기본으로 쓰는 navigator.locks 기반 탭간 동시성 잠금이
+    // 배포 환경에서 간헐적으로 걸려서 풀리지 않는 경우가 있고, 한번 걸리면
+    // 그 잠금을 기다리는 모든 후속 요청(로그인 이후의 모든 DB 조회 포함)이
+    // 네트워크 요청조차 나가지 못한 채 함께 멈춰버림. 이 앱은 개인용으로
+    // 여러 탭 간 세션 동기화가 중요하지 않으므로 잠금 자체를 쓰지 않음
+    lock: (_name, _acquireTimeout, fn) => fn(),
+  },
+});
 
 // 타입 정의
 export interface UserProfile {
