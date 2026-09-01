@@ -15,8 +15,6 @@ export const useBodyWeight = (user: SupabaseUser | null) => {
   // 사용자 프로필 로드 - auth_id 기반
   const loadUserProfile = useCallback(async (userId: string) => {
     try {
-      console.log("👤 프로필 조회 시작:", userId);
-
       const { data: profile, error: profileError } = await withTimeout(
         supabase
           .from("user_profiles")
@@ -26,8 +24,6 @@ export const useBodyWeight = (user: SupabaseUser | null) => {
         8000,
         "프로필 조회 요청이 시간 초과됐습니다."
       );
-
-      console.log("👤 프로필 조회 결과:", { profile, profileError });
 
       if (profileError) {
         console.error("프로필 로드 에러:", profileError);
@@ -51,11 +47,6 @@ export const useBodyWeight = (user: SupabaseUser | null) => {
         setTempBodyWeight(String(weight));
         setGender(userGender);
         setProteinGoal(userGoal);
-        console.log("✅ 프로필 로드 성공:", {
-          weight,
-          gender: userGender,
-          goal: userGoal,
-        });
       }
     } catch (error) {
       console.error("Error loading user profile:", error);
@@ -66,21 +57,16 @@ export const useBodyWeight = (user: SupabaseUser | null) => {
   const updateBodyWeight = async (newWeight: number): Promise<boolean> => {
     if (!user || newWeight <= 0) return false;
 
-    console.log("💪 체중 업데이트 시작:", { userId: user.id, newWeight });
-
     try {
       const { error } = await supabase
         .from("user_profiles")
         .update({ body_weight: newWeight })
         .eq("auth_id", user.id);
 
-      console.log("📝 체중 업데이트 결과:", { error });
-
       if (error) throw error;
 
       setBodyWeight(newWeight);
       setTempBodyWeight(String(newWeight));
-      console.log("✅ 체중 업데이트 성공!");
       return true;
     } catch (error) {
       console.error("❌ 체중 업데이트 실패:", error);
@@ -131,8 +117,6 @@ export const useBodyWeight = (user: SupabaseUser | null) => {
 
   // 성별 업데이트
   const updateGender = async (newGender: Gender): Promise<boolean> => {
-    console.log("👤 성별 업데이트 시작:", newGender);
-
     // 로컬 상태는 즉시 업데이트
     setGender(newGender);
 
@@ -146,11 +130,8 @@ export const useBodyWeight = (user: SupabaseUser | null) => {
         .update({ gender: newGender })
         .eq("auth_id", user.id);
 
-      console.log("📝 성별 업데이트 결과:", { error });
-
       if (error) throw error;
 
-      console.log("✅ 성별 업데이트 성공:", newGender);
       return true;
     } catch (error) {
       console.error("❌ 성별 업데이트 실패:", error);
@@ -161,8 +142,6 @@ export const useBodyWeight = (user: SupabaseUser | null) => {
 
   // 단백질 목적 업데이트
   const updateProteinGoal = async (newGoal: ProteinGoal): Promise<boolean> => {
-    console.log("🎯 단백질 목표 업데이트 시작:", newGoal);
-
     // 로컬 상태는 즉시 업데이트
     setProteinGoal(newGoal);
 
@@ -176,11 +155,8 @@ export const useBodyWeight = (user: SupabaseUser | null) => {
         .update({ protein_goal: newGoal })
         .eq("auth_id", user.id);
 
-      console.log("📝 단백질 목표 업데이트 결과:", { error });
-
       if (error) throw error;
 
-      console.log("✅ 단백질 목표 업데이트 성공:", newGoal);
       return true;
     } catch (error) {
       console.error("❌ 단백질 목표 업데이트 실패:", error);

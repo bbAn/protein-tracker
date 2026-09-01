@@ -119,12 +119,9 @@ export const useDailyRecords = (
           timeout,
         ]);
 
-        console.log(`📊 ${key} 기록 조회 결과:`, {
-          records: records?.length,
-          recordsError,
-          supplementRecords: supplementRecords?.length,
-          supplementError,
-        });
+        if (recordsError) console.error("일일 기록 조회 실패:", recordsError);
+        if (supplementError)
+          console.error("영양제 기록 조회 실패:", supplementError);
 
         if (records || supplementRecords) {
           setDailyRecords((prev) => {
@@ -237,7 +234,6 @@ export const useDailyRecords = (
       });
 
       setDailyRecords(updatedRecords);
-      console.log("✅ 음식 추가 성공!");
       return true;
     } catch (error) {
       console.error("❌ 음식 추가 실패:", error);
@@ -336,7 +332,6 @@ export const useDailyRecords = (
             meal
           ].filter((food) => food.id !== foodId);
           setDailyRecords(updatedRecords);
-          console.log("✅ 음식 삭제 성공!");
         }
         return true;
       } else {
@@ -516,8 +511,6 @@ export const useDailyRecords = (
         .eq("record_date", dbDateString);
 
       if (error) throw error;
-
-      console.log("✅ 운동 상태 DB 업데이트 성공:", newStatus);
     } catch (error) {
       console.error("❌ 운동 상태 DB 업데이트 실패:", error);
       // 여기서 원래 상태로 되돌리는 로직을 추가할 수 있습니다.
