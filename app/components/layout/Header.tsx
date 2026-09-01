@@ -37,12 +37,14 @@ export const Header: React.FC<HeaderProps> = ({
             </button>
             <button
               onClick={onSettingsClick}
+              aria-label="설정"
               className="flex items-center gap-2 px-3 py-2 bg-muted-bg text-foreground rounded-lg hover:bg-muted-bg-hover transition-colors"
             >
               <Settings size={18} />
             </button>
             <button
               onClick={onLogoutClick}
+              aria-label="로그아웃"
               className="flex items-center gap-2 px-3 py-2 text-danger hover:bg-danger/10 rounded-lg transition-colors"
             >
               <LogOut size={18} />

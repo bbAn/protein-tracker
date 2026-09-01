@@ -282,6 +282,7 @@ export const DailyRecordPanel: React.FC<DailyRecordPanelProps> = ({
                     <span className="text-muted">{foodItem.protein}g</span>
                     <button
                       onClick={() => onRemoveFood(meal, foodItem.id)}
+                      aria-label={`${foodItem.name} 삭제`}
                       className="text-muted hover:text-danger"
                     >
                       <Trash2 size={12} />
@@ -462,6 +463,7 @@ export const DailyRecordPanel: React.FC<DailyRecordPanelProps> = ({
                     </span>
                     <button
                       onClick={() => onRemoveSupplement(meal, item.id)}
+                      aria-label={`${item.name} 삭제`}
                       className="text-muted hover:text-danger"
                     >
                       <Trash2 size={12} />

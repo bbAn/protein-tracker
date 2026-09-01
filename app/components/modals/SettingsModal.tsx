@@ -103,6 +103,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
           <h3 className='text-lg font-semibold text-foreground'>설정</h3>
           <button
             onClick={onClose}
+            aria-label='설정 닫기'
             className='text-muted hover:text-foreground'
           >
             <X size={20} />
@@ -264,6 +265,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
               <button
                 onClick={onAddFood}
                 disabled={!newFood.name || !newFood.protein}
+                aria-label='음식 추가'
                 className='px-3 py-2 bg-accent text-white rounded-lg hover:bg-accent-hover disabled:bg-muted-bg-hover disabled:text-muted disabled:cursor-not-allowed'
               >
                 <Plus size={16} />
@@ -309,6 +311,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                         />
                         <button
                           onClick={onStopEditing}
+                          aria-label='수정 완료'
                           className='text-success hover:opacity-80'
                         >
                           <Check size={14} />
@@ -323,12 +326,14 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                         <div className='flex gap-1'>
                           <button
                             onClick={() => onEditFood(foodItem.id)}
+                            aria-label={`${foodItem.name} 수정`}
                             className='text-muted hover:text-accent p-1'
                           >
                             <Edit size={12} />
                           </button>
                           <button
                             onClick={() => onDeleteFood(foodItem.id)}
+                            aria-label={`${foodItem.name} 삭제`}
                             className='text-muted hover:text-danger p-1'
                           >
                             <Trash2 size={12} />
@@ -395,6 +400,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
               <button
                 onClick={onAddSupplement}
                 disabled={!newSupplement.name}
+                aria-label='영양제·건강식품 추가'
                 className='px-3 py-2 bg-accent text-white rounded-lg hover:bg-accent-hover disabled:bg-muted-bg-hover disabled:text-muted disabled:cursor-not-allowed shrink-0'
               >
                 <Plus size={16} />
@@ -458,6 +464,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                         />
                         <button
                           onClick={onStopEditingSupplement}
+                          aria-label='수정 완료'
                           className='text-success hover:opacity-80'
                         >
                           <Check size={14} />
@@ -475,12 +482,14 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                         <div className='flex gap-1'>
                           <button
                             onClick={() => onEditSupplement(item.id)}
+                            aria-label={`${item.name} 수정`}
                             className='text-muted hover:text-accent p-1'
                           >
                             <Edit size={12} />
                           </button>
                           <button
                             onClick={() => onDeleteSupplement(item.id)}
+                            aria-label={`${item.name} 삭제`}
                             className='text-muted hover:text-danger p-1'
                           >
                             <Trash2 size={12} />
