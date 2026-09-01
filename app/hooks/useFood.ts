@@ -264,6 +264,16 @@ export const useFood = (user: SupabaseUser | null) => {
     setCalcResult(null);
   };
 
+  // 로그아웃 시 초기화 (캐시된 프로필 ID를 남겨두면 다른 계정으로
+  // 재로그인했을 때 이전 계정의 프로필 ID를 그대로 써버림)
+  const resetFood = (): void => {
+    setFoodDatabase(DEFAULT_FOODS);
+    setEditingFood(null);
+    setNewFood({ name: "", protein: "" });
+    setUserProfileId(null);
+    resetCalculator();
+  };
+
   return {
     // 상태
     foodDatabase,
@@ -286,6 +296,7 @@ export const useFood = (user: SupabaseUser | null) => {
     updateFood,
     calculateProtein,
     resetCalculator,
+    resetFood,
     searchNutrition,
   };
 };

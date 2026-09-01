@@ -518,6 +518,14 @@ export const useDailyRecords = (
     }
   };
 
+  // 로그아웃 시 초기화 (캐시된 프로필 ID와 로드된 달 기록을 남겨두면
+  // 다른 계정으로 재로그인했을 때 이전 계정의 데이터를 그대로 써버림)
+  const resetDailyRecords = (): void => {
+    setDailyRecords({});
+    setUserProfileId(null);
+    loadedMonthsRef.current.clear();
+  };
+
   return {
     // 상태
     dailyRecords,
@@ -536,5 +544,6 @@ export const useDailyRecords = (
     removeSupplement,
     toggleCardio,
     toggleStrength,
+    resetDailyRecords,
   };
 };

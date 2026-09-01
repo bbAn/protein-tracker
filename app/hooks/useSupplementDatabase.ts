@@ -196,6 +196,15 @@ export const useSupplementDatabase = (user: SupabaseUser | null) => {
     }
   };
 
+  // 로그아웃 시 초기화 (캐시된 프로필 ID를 남겨두면 다른 계정으로
+  // 재로그인했을 때 이전 계정의 프로필 ID를 그대로 써버림)
+  const resetSupplementDatabase = (): void => {
+    setSupplementDatabase([]);
+    setEditingSupplement(null);
+    setNewSupplement({ name: "", quantity: "", dosage: "" });
+    setUserProfileId(null);
+  };
+
   return {
     // 상태
     supplementDatabase,
@@ -211,5 +220,6 @@ export const useSupplementDatabase = (user: SupabaseUser | null) => {
     addNewSupplement,
     deleteSupplement,
     updateSupplement,
+    resetSupplementDatabase,
   };
 };

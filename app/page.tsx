@@ -133,6 +133,9 @@ const ProteinTracker: React.FC = () => {
   const handleLogout = async () => {
     await auth.handleLogout();
     bodyWeight.resetBodyWeight();
+    food.resetFood();
+    dailyRecords.resetDailyRecords();
+    supplementDb.resetSupplementDatabase();
   };
 
   // 직접 입력으로 음식 추가하는 함수
