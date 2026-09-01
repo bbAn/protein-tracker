@@ -29,7 +29,6 @@ interface DateState {
 
 interface ModalState {
   settings: boolean;
-  calculator: boolean;
 }
 
 interface DirectInputState {
@@ -54,7 +53,6 @@ const ProteinTracker: React.FC = () => {
   // 모달 상태 통합
   const [modalState, setModalState] = useState<ModalState>({
     settings: false,
-    calculator: false,
   });
 
   // 직접 입력 모드 상태

@@ -2,7 +2,7 @@ import { useCallback, useState } from "react";
 import { supabase } from "../../lib/supabase";
 import { withTimeout } from "../../lib/withTimeout";
 import { DEFAULT_FOODS } from "../constants";
-import { CalcResult, FoodItem, NutritionLookupResult, SupabaseUser } from "../types";
+import { FoodItem, NutritionLookupResult, SupabaseUser } from "../types";
 
 export const useFood = (user: SupabaseUser | null) => {
   const [foodDatabase, setFoodDatabase] = useState<FoodItem[]>(DEFAULT_FOODS);
@@ -12,11 +12,6 @@ export const useFood = (user: SupabaseUser | null) => {
     protein: "",
   });
   const [userProfileId, setUserProfileId] = useState<string | null>(null);
-
-  // 계산기 상태
-  const [calcFood, setCalcFood] = useState<string>("");
-  const [calcAmount, setCalcAmount] = useState<string>("");
-  const [calcResult, setCalcResult] = useState<CalcResult | null>(null);
 
   // 영양성분 후보 검색
   const searchNutrition = useCallback(
@@ -238,32 +233,6 @@ export const useFood = (user: SupabaseUser | null) => {
     }
   };
 
-  // 계산기 기능
-  const calculateProtein = (): void => {
-    const food = foodDatabase.find(
-      (f) => f.name.toLowerCase() === calcFood.toLowerCase()
-    );
-    const amount = parseFloat(calcAmount);
-
-    if (!food || isNaN(amount) || amount <= 0) {
-      alert("올바른 음식과 수량을 입력해주세요.");
-      return;
-    }
-
-    const protein = ((food.protein * amount) / 100).toFixed(1);
-    setCalcResult({
-      food: food.name,
-      amount: calcAmount,
-      protein,
-    });
-  };
-
-  const resetCalculator = (): void => {
-    setCalcFood("");
-    setCalcAmount("");
-    setCalcResult(null);
-  };
-
   // 로그아웃 시 초기화 (캐시된 프로필 ID를 남겨두면 다른 계정으로
   // 재로그인했을 때 이전 계정의 프로필 ID를 그대로 써버림)
   const resetFood = (): void => {
@@ -271,7 +240,6 @@ export const useFood = (user: SupabaseUser | null) => {
     setEditingFood(null);
     setNewFood({ name: "", protein: "" });
     setUserProfileId(null);
-    resetCalculator();
   };
 
   return {
@@ -279,23 +247,16 @@ export const useFood = (user: SupabaseUser | null) => {
     foodDatabase,
     editingFood,
     newFood,
-    calcFood,
-    calcAmount,
-    calcResult,
 
     // 상태 변경
     setEditingFood,
     setNewFood,
-    setCalcFood,
-    setCalcAmount,
 
     // 액션
     loadFoodDatabase,
     addNewFood,
     deleteFood,
     updateFood,
-    calculateProtein,
-    resetCalculator,
     resetFood,
     searchNutrition,
   };

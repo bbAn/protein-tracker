@@ -25,12 +25,6 @@ export interface DayRecord {
   hasStrength: boolean;
 }
 
-export interface CalcResult {
-  food: string;
-  amount: string;
-  protein: string;
-}
-
 export interface NutritionLookupResult {
   name: string;
   proteinPer100g: number;
