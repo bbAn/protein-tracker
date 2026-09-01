@@ -333,41 +333,45 @@ export const DailyRecordPanel: React.FC<DailyRecordPanelProps> = ({
                     }
                     className="w-full p-2 text-sm border border-border rounded-lg focus:ring-2 focus:ring-accent"
                   />
-                  {showSuggestions[meal] && suggestions[meal].length > 0 && (
-                    <ul className="absolute z-10 mt-1 w-full max-h-48 overflow-auto bg-surface border border-border rounded-lg shadow-md">
-                      {suggestions[meal].map((suggestion, index) => (
-                        <li key={`${suggestion.name}-${index}`}>
-                          <button
-                            type="button"
-                            onMouseDown={(e) => {
-                              e.preventDefault();
-                              handleSelectSuggestion(meal, suggestion);
-                            }}
-                            className="w-full text-left px-3 py-2 text-sm hover:bg-muted-bg flex justify-between gap-2"
-                          >
-                            <span className="text-foreground">
-                              {suggestion.name}
-                            </span>
-                            <span className="text-muted shrink-0">
-                              {suggestion.proteinPer100g.toFixed(1)}g/100g
-                            </span>
-                          </button>
-                        </li>
-                      ))}
-                    </ul>
-                  )}
+                  {showSuggestions[meal] &&
+                    (lookupStatus[meal] === "loading" ||
+                      suggestions[meal].length > 0 ||
+                      lookupStatus[meal] === "not_found") && (
+                      <ul className="absolute z-10 mt-1 w-full max-h-48 overflow-auto bg-surface border border-border rounded-lg shadow-md">
+                        {lookupStatus[meal] === "loading" ? (
+                          <li className="flex items-center gap-2 px-3 py-2 text-sm text-muted">
+                            <span className="w-3.5 h-3.5 border-2 border-border border-t-accent rounded-full animate-spin shrink-0" />
+                            단백질 함량 검색 중...
+                          </li>
+                        ) : suggestions[meal].length > 0 ? (
+                          suggestions[meal].map((suggestion, index) => (
+                            <li key={`${suggestion.name}-${index}`}>
+                              <button
+                                type="button"
+                                onMouseDown={(e) => {
+                                  e.preventDefault();
+                                  handleSelectSuggestion(meal, suggestion);
+                                }}
+                                className="w-full text-left px-3 py-2 text-sm hover:bg-muted-bg flex justify-between gap-2"
+                              >
+                                <span className="text-foreground">
+                                  {suggestion.name}
+                                </span>
+                                <span className="text-muted shrink-0">
+                                  {suggestion.proteinPer100g.toFixed(1)}g/100g
+                                </span>
+                              </button>
+                            </li>
+                          ))
+                        ) : (
+                          <li className="px-3 py-2 text-sm text-muted">
+                            일치하는 음식을 찾지 못했어요. 단백질(g)을 직접
+                            입력해주세요.
+                          </li>
+                        )}
+                      </ul>
+                    )}
                 </div>
-                {lookupStatus[meal] === "loading" && (
-                  <div className="text-xs text-muted">
-                    단백질 함량 검색 중...
-                  </div>
-                )}
-                {lookupStatus[meal] === "not_found" && (
-                  <div className="text-xs text-muted">
-                    일치하는 음식을 찾지 못했어요. 단백질(g)을 직접
-                    입력해주세요.
-                  </div>
-                )}
                 <div className="flex gap-2">
                   <input
                     type="number"
