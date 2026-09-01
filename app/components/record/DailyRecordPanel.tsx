@@ -25,6 +25,12 @@ type LookupStatus = "idle" | "loading" | "not_found" | "error";
 
 const SEARCH_DEBOUNCE_MS = 400;
 
+const MEAL_ICONS: Record<MealType, string> = {
+  breakfast: "🌅",
+  lunch: "☀️",
+  dinner: "🌙",
+};
+
 interface DailyRecordPanelProps {
   selectedDate: string;
   currentRecord: DayRecord;
@@ -251,9 +257,13 @@ export const DailyRecordPanel: React.FC<DailyRecordPanelProps> = ({
         );
 
         return (
-          <div key={meal} className="mb-4">
+          <div
+            key={meal}
+            className="mb-4 p-4 rounded-xl border border-border bg-background"
+          >
             <div className="flex justify-between items-center mb-2">
-              <h4 className="font-medium text-foreground">
+              <h4 className="font-medium text-foreground flex items-center gap-1.5">
+                <span aria-hidden="true">{MEAL_ICONS[meal]}</span>
                 {MEAL_NAMES[meal]}
               </h4>
               <span className="text-sm text-muted">
