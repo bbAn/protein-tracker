@@ -1,5 +1,5 @@
 import { Check, Edit, Plus, Trash2, X } from 'lucide-react';
-import React from 'react';
+import React, { useState } from 'react';
 import { SupplementDatabaseItem } from '../../types';
 
 interface FoodItem {
@@ -94,7 +94,55 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
   onDeleteSupplement,
   onStopEditingSupplement,
 }) => {
+  // 편집 중인 값의 임시 상태. 필드마다 개별적으로 엔터를 눌러야만
+  // 저장되고, 완료 버튼은 그냥 편집 모드만 닫아버리던 문제를 고쳐
+  // 완료 버튼(또는 엔터)을 누르면 모든 필드가 한 번에 저장되게 함
+  const [foodEditDraft, setFoodEditDraft] = useState({
+    name: '',
+    protein: '',
+  });
+  const [supplementEditDraft, setSupplementEditDraft] = useState({
+    name: '',
+    quantity: '',
+    dosage: '',
+  });
+
   if (!isOpen) return null;
+
+  const startEditFood = (foodItem: FoodItem) => {
+    setFoodEditDraft({
+      name: foodItem.name,
+      protein: String(foodItem.protein),
+    });
+    onEditFood(foodItem.id);
+  };
+
+  const confirmEditFood = (id: number) => {
+    const protein = parseFloat(foodEditDraft.protein);
+    onUpdateFood(id, {
+      name: foodEditDraft.name,
+      ...(isNaN(protein) ? {} : { protein }),
+    });
+    onStopEditing();
+  };
+
+  const startEditSupplement = (item: SupplementDatabaseItem) => {
+    setSupplementEditDraft({
+      name: item.name,
+      quantity: item.quantity ?? '',
+      dosage: item.dosage ?? '',
+    });
+    onEditSupplement(item.id);
+  };
+
+  const confirmEditSupplement = (id: number) => {
+    onUpdateSupplement(id, {
+      name: supplementEditDraft.name,
+      quantity: supplementEditDraft.quantity,
+      dosage: supplementEditDraft.dosage,
+    });
+    onStopEditingSupplement();
+  };
 
   return (
     <div className='fixed inset-0 bg-black/40 flex items-center justify-center z-50'>
@@ -286,31 +334,35 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                       <div className='flex gap-2 flex-1'>
                         <input
                           type='text'
-                          defaultValue={foodItem.name}
+                          value={foodEditDraft.name}
+                          onChange={(e) =>
+                            setFoodEditDraft((d) => ({
+                              ...d,
+                              name: e.target.value,
+                            }))
+                          }
                           onKeyDown={(e) => {
-                            if (e.key === 'Enter') {
-                              const target = e.target as HTMLInputElement;
-                              onUpdateFood(foodItem.id, { name: target.value });
-                            }
+                            if (e.key === 'Enter') confirmEditFood(foodItem.id);
                           }}
                           className='flex-1 p-1 text-xs border border-border rounded focus:ring-1 focus:ring-accent'
                         />
                         <input
                           type='number'
                           step='0.1'
-                          defaultValue={foodItem.protein}
+                          value={foodEditDraft.protein}
+                          onChange={(e) =>
+                            setFoodEditDraft((d) => ({
+                              ...d,
+                              protein: e.target.value,
+                            }))
+                          }
                           onKeyDown={(e) => {
-                            if (e.key === 'Enter') {
-                              const target = e.target as HTMLInputElement;
-                              onUpdateFood(foodItem.id, {
-                                protein: parseFloat(target.value),
-                              });
-                            }
+                            if (e.key === 'Enter') confirmEditFood(foodItem.id);
                           }}
                           className='w-16 p-1 text-xs border border-border rounded focus:ring-1 focus:ring-accent'
                         />
                         <button
-                          onClick={onStopEditing}
+                          onClick={() => confirmEditFood(foodItem.id)}
                           aria-label='수정 완료'
                           className='text-success hover:opacity-80'
                         >
@@ -325,7 +377,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                         </span>
                         <div className='flex gap-1'>
                           <button
-                            onClick={() => onEditFood(foodItem.id)}
+                            onClick={() => startEditFood(foodItem)}
                             aria-label={`${foodItem.name} 수정`}
                             className='text-muted hover:text-accent p-1'
                           >
@@ -423,47 +475,50 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                       <div className='flex gap-2 flex-1'>
                         <input
                           type='text'
-                          defaultValue={item.name}
+                          value={supplementEditDraft.name}
+                          onChange={(e) =>
+                            setSupplementEditDraft((d) => ({
+                              ...d,
+                              name: e.target.value,
+                            }))
+                          }
                           onKeyDown={(e) => {
-                            if (e.key === 'Enter') {
-                              const target = e.target as HTMLInputElement;
-                              onUpdateSupplement(item.id, {
-                                name: target.value,
-                              });
-                            }
+                            if (e.key === 'Enter') confirmEditSupplement(item.id);
                           }}
                           className='flex-1 p-1 text-xs border border-border rounded focus:ring-1 focus:ring-accent'
                         />
                         <input
                           type='text'
                           placeholder='수량'
-                          defaultValue={item.quantity}
+                          value={supplementEditDraft.quantity}
+                          onChange={(e) =>
+                            setSupplementEditDraft((d) => ({
+                              ...d,
+                              quantity: e.target.value,
+                            }))
+                          }
                           onKeyDown={(e) => {
-                            if (e.key === 'Enter') {
-                              const target = e.target as HTMLInputElement;
-                              onUpdateSupplement(item.id, {
-                                quantity: target.value,
-                              });
-                            }
+                            if (e.key === 'Enter') confirmEditSupplement(item.id);
                           }}
                           className='w-14 p-1 text-xs border border-border rounded focus:ring-1 focus:ring-accent'
                         />
                         <input
                           type='text'
                           placeholder='용량'
-                          defaultValue={item.dosage}
+                          value={supplementEditDraft.dosage}
+                          onChange={(e) =>
+                            setSupplementEditDraft((d) => ({
+                              ...d,
+                              dosage: e.target.value,
+                            }))
+                          }
                           onKeyDown={(e) => {
-                            if (e.key === 'Enter') {
-                              const target = e.target as HTMLInputElement;
-                              onUpdateSupplement(item.id, {
-                                dosage: target.value,
-                              });
-                            }
+                            if (e.key === 'Enter') confirmEditSupplement(item.id);
                           }}
                           className='w-14 p-1 text-xs border border-border rounded focus:ring-1 focus:ring-accent'
                         />
                         <button
-                          onClick={onStopEditingSupplement}
+                          onClick={() => confirmEditSupplement(item.id)}
                           aria-label='수정 완료'
                           className='text-success hover:opacity-80'
                         >
@@ -481,7 +536,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                         </span>
                         <div className='flex gap-1'>
                           <button
-                            onClick={() => onEditSupplement(item.id)}
+                            onClick={() => startEditSupplement(item)}
                             aria-label={`${item.name} 수정`}
                             className='text-muted hover:text-accent p-1'
                           >
