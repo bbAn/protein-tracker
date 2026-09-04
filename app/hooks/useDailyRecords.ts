@@ -23,7 +23,14 @@ const emptyDayRecord = (): DayRecord => ({
   lunch: [],
   snack: [],
   dinner: [],
-  supplements: { breakfast: [], lunch: [], snack: [], dinner: [] },
+  postWorkout: [],
+  supplements: {
+    breakfast: [],
+    lunch: [],
+    snack: [],
+    dinner: [],
+    postWorkout: [],
+  },
   hasCardio: false,
   hasStrength: false,
 });
@@ -183,6 +190,7 @@ export const useDailyRecords = (
       ...record.lunch,
       ...record.snack,
       ...record.dinner,
+      ...record.postWorkout,
     ].reduce((total, food) => total + food.protein, 0);
   };
 

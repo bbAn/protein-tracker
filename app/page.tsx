@@ -36,6 +36,7 @@ interface DirectInputState {
   lunch: boolean;
   snack: boolean;
   dinner: boolean;
+  postWorkout: boolean;
 }
 
 interface DirectInputData {
@@ -43,6 +44,7 @@ interface DirectInputData {
   lunch: { name: string; amount: string; protein: string };
   snack: { name: string; amount: string; protein: string };
   dinner: { name: string; amount: string; protein: string };
+  postWorkout: { name: string; amount: string; protein: string };
 }
 
 const ProteinTracker: React.FC = () => {
@@ -63,6 +65,7 @@ const ProteinTracker: React.FC = () => {
     lunch: false,
     snack: false,
     dinner: false,
+    postWorkout: false,
   });
 
   // 직접 입력 데이터
@@ -71,6 +74,7 @@ const ProteinTracker: React.FC = () => {
     lunch: { name: "", amount: "", protein: "" },
     snack: { name: "", amount: "", protein: "" },
     dinner: { name: "", amount: "", protein: "" },
+    postWorkout: { name: "", amount: "", protein: "" },
   });
 
   // 커스텀 훅들

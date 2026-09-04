@@ -17,11 +17,13 @@ export interface DayRecord {
   lunch: MealData[];
   snack: MealData[];
   dinner: MealData[];
+  postWorkout: MealData[];
   supplements: {
     breakfast: SupplementItem[];
     lunch: SupplementItem[];
     snack: SupplementItem[];
     dinner: SupplementItem[];
+    postWorkout: SupplementItem[];
   };
   hasCardio: boolean;
   hasStrength: boolean;
@@ -52,7 +54,7 @@ export interface DailyRecord {
   id: number;
   user_id: string;
   record_date: string;
-  meal_type: "breakfast" | "lunch" | "snack" | "dinner";
+  meal_type: "breakfast" | "lunch" | "snack" | "dinner" | "postWorkout";
   food_name: string;
   protein_amount: number;
   is_workout_day: boolean; // 하위 호환성을 위해 유지
@@ -74,13 +76,13 @@ export interface SupplementRecord {
   id: number;
   user_id: string;
   record_date: string;
-  meal_type: "breakfast" | "lunch" | "snack" | "dinner";
+  meal_type: "breakfast" | "lunch" | "snack" | "dinner" | "postWorkout";
   name: string;
   note: string | null;
   created_at: string;
 }
 
-export type MealType = "breakfast" | "lunch" | "snack" | "dinner";
+export type MealType = "breakfast" | "lunch" | "snack" | "dinner" | "postWorkout";
 
 export type AuthMode = "login" | "signup";
 

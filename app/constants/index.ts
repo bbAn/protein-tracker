@@ -16,6 +16,7 @@ export const MEAL_NAMES = {
   lunch: "점심",
   snack: "간식",
   dinner: "저녁",
+  postWorkout: "운동 후 식사",
 } as const;
 
 // 요일 이름

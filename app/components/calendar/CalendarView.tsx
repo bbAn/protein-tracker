@@ -87,6 +87,7 @@ export const CalendarView: React.FC<CalendarViewProps> = ({
             lunch: [],
             snack: [],
             dinner: [],
+            postWorkout: [],
             hasCardio: false,
             hasStrength: false,
           };
@@ -96,6 +97,7 @@ export const CalendarView: React.FC<CalendarViewProps> = ({
             ...dayRecord.lunch,
             ...dayRecord.snack,
             ...dayRecord.dinner,
+            ...dayRecord.postWorkout,
           ].reduce((sum, food) => sum + food.protein, 0);
 
           const dayTarget = getTargetProtein(
