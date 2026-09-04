@@ -159,9 +159,16 @@ const ProteinTracker: React.FC = () => {
       return;
     }
 
+    // 섭취량(g)을 입력했다면 음식명 옆에 함께 표시되도록 이름에 포함
+    const amountNum = parseFloat(inputData.amount);
+    const foodName =
+      !isNaN(amountNum) && amountNum > 0
+        ? `${inputData.name} ${amountNum}g`
+        : inputData.name;
+
     const success = await dailyRecords.addDirectFoodToMeal(
       meal,
-      inputData.name,
+      foodName,
       proteinAmount,
       dateState.selected
     );
