@@ -473,29 +473,16 @@ export const useDailyRecords = (
 
   // 근력 운동 토글
   const toggleStrength = async (selectedDate: string): Promise<void> => {
-    if (!user) return;
-
-    try {
-      const updatedRecords = { ...dailyRecords };
-      if (!updatedRecords[selectedDate]) {
-        updatedRecords[selectedDate] = emptyDayRecord();
-      }
-
-      const newStrengthStatus = !updatedRecords[selectedDate].hasStrength;
-      updatedRecords[selectedDate].hasStrength = newStrengthStatus;
-
-      const dbDateString = dateKeyToDateString(selectedDate);
-
-      await supabase
-        .from("daily_records")
-        .update({ has_strength: newStrengthStatus })
-        .eq("user_id", user.id)
-        .eq("record_date", dbDateString);
-
-      setDailyRecords(updatedRecords);
-    } catch (error) {
-      console.error("❌ 근력운동 토글 실패:", error);
+    const updatedRecords = { ...dailyRecords };
+    if (!updatedRecords[selectedDate]) {
+      updatedRecords[selectedDate] = emptyDayRecord();
     }
+    const newStatus = !updatedRecords[selectedDate].hasStrength;
+    updatedRecords[selectedDate].hasStrength = newStatus;
+    setDailyRecords(updatedRecords);
+
+    // DB 업데이트
+    await updateWorkoutStatus(selectedDate, { has_strength: newStatus });
   };
 
   // 운동 여부 업데이트 함수
