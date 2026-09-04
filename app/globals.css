@@ -8,8 +8,8 @@
   --muted: #6b7280;
   --muted-bg: #f3f4f6;
   --muted-bg-hover: #e5e7eb;
-  --accent: #2563eb;
-  --accent-hover: #1d4ed8;
+  --accent: #4f46e5;
+  --accent-hover: #4338ca;
   --success: #16a34a;
   --danger: #dc2626;
 }
@@ -22,8 +22,8 @@
   --muted: #9ca3af;
   --muted-bg: #1f1f1f;
   --muted-bg-hover: #2e2e2e;
-  --accent: #3b82f6;
-  --accent-hover: #60a5fa;
+  --accent: #6366f1;
+  --accent-hover: #818cf8;
   --success: #22c55e;
   --danger: #f87171;
 }
