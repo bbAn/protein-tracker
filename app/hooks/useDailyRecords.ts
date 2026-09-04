@@ -21,8 +21,9 @@ const monthKey = (year: number, month: number) =>
 const emptyDayRecord = (): DayRecord => ({
   breakfast: [],
   lunch: [],
+  snack: [],
   dinner: [],
-  supplements: { breakfast: [], lunch: [], dinner: [] },
+  supplements: { breakfast: [], lunch: [], snack: [], dinner: [] },
   hasCardio: false,
   hasStrength: false,
 });
@@ -177,10 +178,12 @@ export const useDailyRecords = (
   // 특정 날짜의 총 단백질량 계산
   const getTotalProtein = (dateString: string): number => {
     const record = getDayRecord(dateString);
-    return [...record.breakfast, ...record.lunch, ...record.dinner].reduce(
-      (total, food) => total + food.protein,
-      0
-    );
+    return [
+      ...record.breakfast,
+      ...record.lunch,
+      ...record.snack,
+      ...record.dinner,
+    ].reduce((total, food) => total + food.protein, 0);
   };
 
   // 음식 추가

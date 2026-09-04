@@ -10,7 +10,7 @@ import { useFood } from "./hooks/useFood";
 import { useSupplementDatabase } from "./hooks/useSupplementDatabase";
 
 // Components
-import { ProteinGoal } from "@/app/types";
+import { MealType, ProteinGoal } from "@/app/types";
 import { AuthForm } from "./components/auth/AuthForm";
 import { CalendarView } from "./components/calendar/CalendarView";
 import { Header } from "./components/layout/Header";
@@ -34,12 +34,14 @@ interface ModalState {
 interface DirectInputState {
   breakfast: boolean;
   lunch: boolean;
+  snack: boolean;
   dinner: boolean;
 }
 
 interface DirectInputData {
   breakfast: { name: string; amount: string; protein: string };
   lunch: { name: string; amount: string; protein: string };
+  snack: { name: string; amount: string; protein: string };
   dinner: { name: string; amount: string; protein: string };
 }
 
@@ -59,6 +61,7 @@ const ProteinTracker: React.FC = () => {
   const [directInputMode, setDirectInputMode] = useState<DirectInputState>({
     breakfast: false,
     lunch: false,
+    snack: false,
     dinner: false,
   });
 
@@ -66,6 +69,7 @@ const ProteinTracker: React.FC = () => {
   const [directInputData, setDirectInputData] = useState<DirectInputData>({
     breakfast: { name: "", amount: "", protein: "" },
     lunch: { name: "", amount: "", protein: "" },
+    snack: { name: "", amount: "", protein: "" },
     dinner: { name: "", amount: "", protein: "" },
   });
 
@@ -137,7 +141,7 @@ const ProteinTracker: React.FC = () => {
   };
 
   // 직접 입력으로 음식 추가하는 함수
-  const addDirectFood = async (meal: "breakfast" | "lunch" | "dinner") => {
+  const addDirectFood = async (meal: MealType) => {
     const inputData = directInputData[meal];
 
     if (!inputData.name || !inputData.protein) {
@@ -176,7 +180,7 @@ const ProteinTracker: React.FC = () => {
   // Enter 키 처리 함수
   const handleDirectInputKeyDown = (
     e: React.KeyboardEvent,
-    meal: "breakfast" | "lunch" | "dinner"
+    meal: MealType
   ) => {
     if (e.key === "Enter") {
       e.preventDefault();

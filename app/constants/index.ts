@@ -14,6 +14,7 @@ export const DEFAULT_FOODS = [
 export const MEAL_NAMES = {
   breakfast: "아침",
   lunch: "점심",
+  snack: "간식",
   dinner: "저녁",
 } as const;
 

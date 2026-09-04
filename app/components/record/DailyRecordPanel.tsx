@@ -12,12 +12,14 @@ import {
 interface DirectInputState {
   breakfast: boolean;
   lunch: boolean;
+  snack: boolean;
   dinner: boolean;
 }
 
 interface DirectInputData {
   breakfast: { name: string; amount: string; protein: string };
   lunch: { name: string; amount: string; protein: string };
+  snack: { name: string; amount: string; protein: string };
   dinner: { name: string; amount: string; protein: string };
 }
 
@@ -28,6 +30,7 @@ const SEARCH_DEBOUNCE_MS = 400;
 const MEAL_ICONS: Record<MealType, string> = {
   breakfast: "🌅",
   lunch: "☀️",
+  snack: "🍎",
   dinner: "🌙",
 };
 
@@ -49,11 +52,8 @@ interface DailyRecordPanelProps {
   onDirectInputDataChange: React.Dispatch<
     React.SetStateAction<DirectInputData>
   >;
-  onAddDirectFood: (meal: "breakfast" | "lunch" | "dinner") => void;
-  onDirectInputKeyDown: (
-    e: React.KeyboardEvent,
-    meal: "breakfast" | "lunch" | "dinner"
-  ) => void;
+  onAddDirectFood: (meal: MealType) => void;
+  onDirectInputKeyDown: (e: React.KeyboardEvent, meal: MealType) => void;
   onSearchNutrition: (foodName: string) => Promise<NutritionLookupResult[]>;
   supplementDatabase: SupplementDatabaseItem[];
   onAddSupplement: (meal: MealType, name: string, note: string) => void;
@@ -86,11 +86,12 @@ export const DailyRecordPanel: React.FC<DailyRecordPanelProps> = ({
   >({
     breakfast: { name: "", note: "" },
     lunch: { name: "", note: "" },
+    snack: { name: "", note: "" },
     dinner: { name: "", note: "" },
   });
   const [supplementInputMode, setSupplementInputMode] = useState<
     Record<MealType, boolean>
-  >({ breakfast: false, lunch: false, dinner: false });
+  >({ breakfast: false, lunch: false, snack: false, dinner: false });
 
   const handleAddSupplement = (meal: MealType) => {
     const input = supplementInput[meal];
@@ -104,19 +105,19 @@ export const DailyRecordPanel: React.FC<DailyRecordPanelProps> = ({
 
   const [proteinPer100g, setProteinPer100g] = useState<
     Record<MealType, number | null>
-  >({ breakfast: null, lunch: null, dinner: null });
+  >({ breakfast: null, lunch: null, snack: null, dinner: null });
   const [lookupStatus, setLookupStatus] = useState<
     Record<MealType, LookupStatus>
-  >({ breakfast: "idle", lunch: "idle", dinner: "idle" });
+  >({ breakfast: "idle", lunch: "idle", snack: "idle", dinner: "idle" });
   const [suggestions, setSuggestions] = useState<
     Record<MealType, NutritionLookupResult[]>
-  >({ breakfast: [], lunch: [], dinner: [] });
+  >({ breakfast: [], lunch: [], snack: [], dinner: [] });
   const [showSuggestions, setShowSuggestions] = useState<
     Record<MealType, boolean>
-  >({ breakfast: false, lunch: false, dinner: false });
+  >({ breakfast: false, lunch: false, snack: false, dinner: false });
   const debounceTimers = useRef<
     Record<MealType, ReturnType<typeof setTimeout> | null>
-  >({ breakfast: null, lunch: null, dinner: null });
+  >({ breakfast: null, lunch: null, snack: null, dinner: null });
 
   const computeProtein = (per100g: number, amount: string): string => {
     const amountNum = parseFloat(amount);
@@ -250,7 +251,7 @@ export const DailyRecordPanel: React.FC<DailyRecordPanelProps> = ({
       </div>
 
       {/* 식사별 기록 */}
-      {(["breakfast", "lunch", "dinner"] as const).map((meal) => {
+      {(["breakfast", "lunch", "snack", "dinner"] as const).map((meal) => {
         const mealTotal = currentRecord[meal].reduce(
           (sum, food) => sum + food.protein,
           0
