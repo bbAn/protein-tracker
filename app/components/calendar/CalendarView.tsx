@@ -29,7 +29,7 @@ export const CalendarView: React.FC<CalendarViewProps> = ({
     currentDate.getMonth() === today.getMonth();
 
   return (
-    <div className="lg:col-span-2 bg-surface rounded-xl border border-border p-6">
+    <div className="bg-surface rounded-xl border border-border p-6">
       <div className="flex justify-between items-center mb-6">
         <h2 className="text-lg font-semibold text-foreground flex items-center gap-2">
           {currentDate.getFullYear()}년 {currentDate.getMonth() + 1}월
