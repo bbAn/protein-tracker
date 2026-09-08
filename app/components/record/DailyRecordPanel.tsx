@@ -1,5 +1,5 @@
 import { Trash2 } from "lucide-react";
-import React, { useRef, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { MEAL_NAMES } from "../../constants";
 import {
   DayRecord,
@@ -47,6 +47,8 @@ interface DailyRecordPanelProps {
   directInputData: DirectInputData;
   onToggleCardio: () => void;
   onToggleStrength: () => void;
+  dateBodyWeight?: number;
+  onDateBodyWeightChange: (weight: number) => void;
   onAddFood: (meal: MealType, foodId: number) => void;
   onRemoveFood: (meal: MealType, foodId: number) => void;
   onDirectInputModeChange: React.Dispatch<
@@ -73,6 +75,8 @@ export const DailyRecordPanel: React.FC<DailyRecordPanelProps> = ({
   directInputData,
   onToggleCardio,
   onToggleStrength,
+  dateBodyWeight,
+  onDateBodyWeightChange,
   onAddFood,
   onRemoveFood,
   onDirectInputModeChange,
@@ -228,9 +232,27 @@ export const DailyRecordPanel: React.FC<DailyRecordPanelProps> = ({
     100
   );
 
+  const [weightInput, setWeightInput] = useState(
+    dateBodyWeight ? String(dateBodyWeight) : ""
+  );
+
+  // 날짜를 바꾸면 그 날짜에 기록된 체중으로 입력창을 다시 채움
+  useEffect(() => {
+    setWeightInput(dateBodyWeight ? String(dateBodyWeight) : "");
+  }, [selectedDate, dateBodyWeight]);
+
+  const handleWeightSubmit = () => {
+    const weight = parseFloat(weightInput);
+    if (isNaN(weight) || weight <= 0) {
+      setWeightInput(dateBodyWeight ? String(dateBodyWeight) : "");
+      return;
+    }
+    onDateBodyWeightChange(weight);
+  };
+
   return (
     <div className="bg-surface rounded-xl border border-border p-6">
-      <div className="flex justify-between items-center mb-4">
+      <div className="flex justify-between items-center mb-3">
         <h3 className="text-lg font-semibold text-foreground">
           {new Date(selectedDate).getMonth() + 1}/
           {new Date(selectedDate).getDate()} 기록
@@ -255,6 +277,25 @@ export const DailyRecordPanel: React.FC<DailyRecordPanelProps> = ({
             <span className="text-sm text-muted">근력운동</span>
           </label>
         </div>
+      </div>
+
+      <div className="flex justify-end mb-4">
+        <label className="flex items-center gap-2">
+          <span className="text-sm text-muted">체중</span>
+          <input
+            type="number"
+            step="0.1"
+            placeholder="kg"
+            value={weightInput}
+            onChange={(e) => setWeightInput(e.target.value)}
+            onBlur={handleWeightSubmit}
+            onKeyDown={(e) => {
+              if (e.key === "Enter") handleWeightSubmit();
+            }}
+            className="w-16 p-1 text-sm border border-border rounded-lg focus:ring-2 focus:ring-accent"
+          />
+          <span className="text-sm text-muted">kg</span>
+        </label>
       </div>
 
       {/* 진행률 */}

@@ -8,7 +8,11 @@ interface CalendarViewProps {
   selectedDate: string;
   dailyRecords: Record<string, DayRecord>;
   bodyWeight: number;
-  getTargetProtein: (hasCardio: boolean, hasStrength: boolean) => number;
+  getTargetProtein: (
+    hasCardio: boolean,
+    hasStrength: boolean,
+    weightOverride?: number
+  ) => number;
   isLoading?: boolean;
   onDateChange: (date: Date) => void;
   onDateSelect: (dateString: string) => void;
@@ -102,7 +106,8 @@ export const CalendarView: React.FC<CalendarViewProps> = ({
 
           const dayTarget = getTargetProtein(
             dayRecord.hasCardio,
-            dayRecord.hasStrength
+            dayRecord.hasStrength,
+            dayRecord.bodyWeight
           );
 
           const isSelected = dateString === selectedDate;

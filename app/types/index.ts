@@ -27,6 +27,7 @@ export interface DayRecord {
   };
   hasCardio: boolean;
   hasStrength: boolean;
+  bodyWeight?: number;
 }
 
 export interface NutritionLookupResult {
@@ -79,6 +80,14 @@ export interface SupplementRecord {
   meal_type: "breakfast" | "lunch" | "snack" | "dinner" | "postWorkout";
   name: string;
   note: string | null;
+  created_at: string;
+}
+
+export interface BodyWeightRecord {
+  id: number;
+  user_id: string;
+  record_date: string;
+  weight: number;
   created_at: string;
 }
 

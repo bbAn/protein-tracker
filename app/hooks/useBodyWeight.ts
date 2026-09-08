@@ -88,10 +88,13 @@ export const useBodyWeight = (user: SupabaseUser | null) => {
   };
 
   // 목표 단백질량 계산 (운동 타입에 따라)
+  // weightOverride: 특정 날짜에 기록된 체중이 있으면 그 값을 기준으로 계산
   const getTargetProtein = (
     hasCardio: boolean,
-    hasStrength: boolean
+    hasStrength: boolean,
+    weightOverride?: number
   ): number => {
+    const weight = weightOverride ?? bodyWeight;
     try {
       const currentGender = gender || "male";
       const currentGoal = proteinGoal || "maintain";
@@ -100,18 +103,18 @@ export const useBodyWeight = (user: SupabaseUser | null) => {
         !PROTEIN_GOALS[currentGender] ||
         !PROTEIN_GOALS[currentGender][currentGoal]
       ) {
-        return bodyWeight * (hasCardio || hasStrength ? 2.0 : 1.2);
+        return weight * (hasCardio || hasStrength ? 2.0 : 1.2);
       }
 
       const multipliers = PROTEIN_GOALS[currentGender][currentGoal];
 
       if (hasCardio || hasStrength) {
-        return bodyWeight * multipliers.workout;
+        return weight * multipliers.workout;
       }
-      return bodyWeight * multipliers.normal;
+      return weight * multipliers.normal;
     } catch (error) {
       console.error("❌ 단백질 계산 오류:", error);
-      return bodyWeight * (hasCardio || hasStrength ? 2.0 : 1.2);
+      return weight * (hasCardio || hasStrength ? 2.0 : 1.2);
     }
   };
 

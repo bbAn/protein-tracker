@@ -227,7 +227,8 @@ const ProteinTracker: React.FC = () => {
   const totalProtein = dailyRecords.getTotalProtein(dateState.selected);
   const targetProtein = bodyWeight.getTargetProtein(
     currentRecord.hasCardio,
-    currentRecord.hasStrength
+    currentRecord.hasStrength,
+    currentRecord.bodyWeight
   );
 
   return (
@@ -265,6 +266,10 @@ const ProteinTracker: React.FC = () => {
             onToggleCardio={() => dailyRecords.toggleCardio(dateState.selected)}
             onToggleStrength={() =>
               dailyRecords.toggleStrength(dateState.selected)
+            }
+            dateBodyWeight={currentRecord.bodyWeight}
+            onDateBodyWeightChange={(weight) =>
+              dailyRecords.setBodyWeightForDate(dateState.selected, weight)
             }
             onAddFood={(meal, foodId) =>
               dailyRecords.addFoodToMeal(meal, foodId, dateState.selected)

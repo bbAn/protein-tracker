@@ -2,6 +2,7 @@ import { useCallback, useRef, useState } from "react";
 import { supabase } from "../../lib/supabase";
 import { withTimeout } from "../../lib/withTimeout";
 import {
+  BodyWeightRecord,
   DailyRecord,
   DayRecord,
   FoodItem,
@@ -107,6 +108,7 @@ export const useDailyRecords = (
         const [
           { data: records, error: recordsError },
           { data: supplementRecords, error: supplementError },
+          { data: weightRecords, error: weightError },
         ] = await Promise.race([
           Promise.all([
             supabase
@@ -123,6 +125,12 @@ export const useDailyRecords = (
               .gte("record_date", monthStart)
               .lt("record_date", monthEnd)
               .order("record_date", { ascending: false }),
+            supabase
+              .from("body_weight_records")
+              .select("*")
+              .eq("user_id", profileId)
+              .gte("record_date", monthStart)
+              .lt("record_date", monthEnd),
           ]),
           timeout,
         ]);
@@ -130,8 +138,9 @@ export const useDailyRecords = (
         if (recordsError) console.error("일일 기록 조회 실패:", recordsError);
         if (supplementError)
           console.error("영양제 기록 조회 실패:", supplementError);
+        if (weightError) console.error("체중 기록 조회 실패:", weightError);
 
-        if (records || supplementRecords) {
+        if (records || supplementRecords || weightRecords) {
           setDailyRecords((prev) => {
             const recordsMap: Record<string, DayRecord> = { ...prev };
 
@@ -161,6 +170,15 @@ export const useDailyRecords = (
                 name: record.name,
                 note: record.note ?? undefined,
               });
+            });
+
+            weightRecords?.forEach((record: BodyWeightRecord) => {
+              const dateKey = dateStringToDateKey(record.record_date);
+
+              if (!recordsMap[dateKey]) {
+                recordsMap[dateKey] = emptyDayRecord();
+              }
+              recordsMap[dateKey].bodyWeight = record.weight;
             });
 
             return recordsMap;
@@ -516,6 +534,50 @@ export const useDailyRecords = (
     }
   };
 
+  // 특정 날짜의 체중 기록
+  const setBodyWeightForDate = async (
+    selectedDate: string,
+    weight: number
+  ): Promise<boolean> => {
+    if (!user || isNaN(weight) || weight <= 0) return false;
+
+    try {
+      const profileId = await getUserProfileId(user.id);
+      if (!profileId) {
+        alert("사용자 프로필을 찾을 수 없습니다.");
+        return false;
+      }
+
+      const dbDateString = dateKeyToDateString(selectedDate);
+
+      const { error } = await supabase.from("body_weight_records").upsert(
+        {
+          user_id: profileId,
+          record_date: dbDateString,
+          weight,
+        },
+        { onConflict: "user_id,record_date" }
+      );
+
+      if (error) throw error;
+
+      const updatedRecords = { ...dailyRecords };
+      if (!updatedRecords[selectedDate]) {
+        updatedRecords[selectedDate] = emptyDayRecord();
+      }
+      updatedRecords[selectedDate] = {
+        ...updatedRecords[selectedDate],
+        bodyWeight: weight,
+      };
+      setDailyRecords(updatedRecords);
+      return true;
+    } catch (error) {
+      console.error("❌ 체중 기록 실패:", error);
+      alert("체중 기록 중 오류가 발생했습니다: " + (error as Error)?.message);
+      return false;
+    }
+  };
+
   // 로그아웃 시 초기화 (캐시된 프로필 ID와 로드된 달 기록을 남겨두면
   // 다른 계정으로 재로그인했을 때 이전 계정의 데이터를 그대로 써버림)
   const resetDailyRecords = (): void => {
@@ -542,6 +604,7 @@ export const useDailyRecords = (
     removeSupplement,
     toggleCardio,
     toggleStrength,
+    setBodyWeightForDate,
     resetDailyRecords,
   };
 };
