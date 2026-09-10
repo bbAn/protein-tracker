@@ -8,6 +8,7 @@ import {
   NutritionLookupResult,
   SupplementDatabaseItem,
 } from "../../types";
+import { WeightTrendChart } from "./WeightTrendChart";
 
 interface DirectInputState {
   breakfast: boolean;
@@ -49,6 +50,7 @@ interface DailyRecordPanelProps {
   onToggleStrength: () => void;
   dateBodyWeight?: number;
   onDateBodyWeightChange: (weight: number) => void;
+  weightHistory: { date: string; weight: number }[];
   onAddFood: (meal: MealType, foodId: number) => void;
   onRemoveFood: (meal: MealType, foodId: number) => void;
   onDirectInputModeChange: React.Dispatch<
@@ -77,6 +79,7 @@ export const DailyRecordPanel: React.FC<DailyRecordPanelProps> = ({
   onToggleStrength,
   dateBodyWeight,
   onDateBodyWeightChange,
+  weightHistory,
   onAddFood,
   onRemoveFood,
   onDirectInputModeChange,
@@ -296,6 +299,11 @@ export const DailyRecordPanel: React.FC<DailyRecordPanelProps> = ({
           />
           <span className="text-sm text-muted">kg</span>
         </label>
+      </div>
+
+      {/* 체중 추이 */}
+      <div className="mb-4 p-3 rounded-xl border border-border bg-background">
+        <WeightTrendChart data={weightHistory} />
       </div>
 
       {/* 진행률 */}

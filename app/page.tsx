@@ -96,6 +96,7 @@ const ProteinTracker: React.FC = () => {
           dateState.current.getFullYear(),
           dateState.current.getMonth()
         ),
+        dailyRecords.loadWeightHistory(auth.user.id),
       ]);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -271,6 +272,7 @@ const ProteinTracker: React.FC = () => {
             onDateBodyWeightChange={(weight) =>
               dailyRecords.setBodyWeightForDate(dateState.selected, weight)
             }
+            weightHistory={dailyRecords.weightHistory}
             onAddFood={(meal, foodId) =>
               dailyRecords.addFoodToMeal(meal, foodId, dateState.selected)
             }

@@ -48,6 +48,9 @@ export const useDailyRecords = (
   // 호출처럼 짧은 시간 안에 같은 달이 두 번 요청되는 것을 막을 수 있음
   const loadedMonthsRef = useRef<Set<string>>(new Set());
   const [isLoadingMonth, setIsLoadingMonth] = useState(false);
+  const [weightHistory, setWeightHistory] = useState<
+    { date: string; weight: number }[]
+  >([]);
 
   // user_profiles의 id 가져오기 (daily_records의 user_id로 사용)
   const getUserProfileId = useCallback(
@@ -75,6 +78,38 @@ export const useDailyRecords = (
       return null;
     },
     [userProfileId]
+  );
+
+  // 최근 N일간의 체중 기록 (체중 추이 그래프용, 월 단위 로딩과 무관하게 항상 최근 구간을 봄)
+  const loadWeightHistory = useCallback(
+    async (authUserId: string, days = 30) => {
+      const profileId = await getUserProfileId(authUserId);
+      if (!profileId) return;
+
+      const since = new Date();
+      since.setDate(since.getDate() - days);
+      const sinceDateString = getKoreanDateString(since);
+
+      try {
+        const { data, error } = await supabase
+          .from("body_weight_records")
+          .select("record_date, weight")
+          .eq("user_id", profileId)
+          .gte("record_date", sinceDateString)
+          .order("record_date", { ascending: true });
+
+        if (error) throw error;
+
+        if (data) {
+          setWeightHistory(
+            data.map((r) => ({ date: r.record_date, weight: r.weight }))
+          );
+        }
+      } catch (error) {
+        console.error("체중 히스토리 로드 실패:", error);
+      }
+    },
+    [getUserProfileId]
   );
 
   // 특정 달의 기록만 로드 (이미 로드한 달이면 재요청하지 않음)
@@ -570,6 +605,15 @@ export const useDailyRecords = (
         bodyWeight: weight,
       };
       setDailyRecords(updatedRecords);
+
+      // 체중 추이 그래프용 히스토리에도 반영
+      setWeightHistory((prev) => {
+        const filtered = prev.filter((w) => w.date !== dbDateString);
+        return [...filtered, { date: dbDateString, weight }].sort((a, b) =>
+          a.date.localeCompare(b.date)
+        );
+      });
+
       return true;
     } catch (error) {
       console.error("❌ 체중 기록 실패:", error);
@@ -583,6 +627,7 @@ export const useDailyRecords = (
   const resetDailyRecords = (): void => {
     setDailyRecords({});
     setUserProfileId(null);
+    setWeightHistory([]);
     loadedMonthsRef.current.clear();
   };
 
@@ -590,6 +635,7 @@ export const useDailyRecords = (
     // 상태
     dailyRecords,
     isLoadingMonth,
+    weightHistory,
 
     // 유틸리티
     getDayRecord,
@@ -597,6 +643,7 @@ export const useDailyRecords = (
 
     // 액션
     loadMonth,
+    loadWeightHistory,
     addFoodToMeal,
     addDirectFoodToMeal,
     removeFoodFromMeal,
