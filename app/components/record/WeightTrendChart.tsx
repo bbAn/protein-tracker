@@ -1,19 +1,35 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 
 interface WeightTrendChartProps {
   data: { date: string; weight: number }[]; // 날짜 오름차순, YYYY-MM-DD
 }
 
-const CHART_WIDTH = 240;
 const CHART_HEIGHT = 56;
 const PAD_Y = CHART_HEIGHT * 0.15;
+const FALLBACK_WIDTH = 240;
 
 export const WeightTrendChart: React.FC<WeightTrendChartProps> = ({
   data,
 }) => {
   const [hoverIndex, setHoverIndex] = useState<number | null>(null);
+  const containerRef = useRef<HTMLDivElement>(null);
+  const [chartWidth, setChartWidth] = useState(FALLBACK_WIDTH);
+
+  // viewBox 너비를 실제 렌더 픽셀 폭과 맞춰야 함. 폭이 안 맞으면
+  // preserveAspectRatio="none"이 가로/세로를 다른 비율로 늘려버려서
+  // 원(circle)이 타원처럼 찌그러져 보임
+  useEffect(() => {
+    const el = containerRef.current;
+    if (!el) return;
+    const observer = new ResizeObserver((entries) => {
+      const width = entries[0]?.contentRect.width;
+      if (width) setChartWidth(width);
+    });
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, []);
 
   if (data.length === 0) {
     return (
@@ -44,7 +60,7 @@ export const WeightTrendChart: React.FC<WeightTrendChartProps> = ({
   const range = max - min || 1;
 
   const points = data.map((d, i) => ({
-    x: (i / (data.length - 1)) * CHART_WIDTH,
+    x: (i / (data.length - 1)) * chartWidth,
     y:
       CHART_HEIGHT -
       PAD_Y -
@@ -68,7 +84,7 @@ export const WeightTrendChart: React.FC<WeightTrendChartProps> = ({
 
   const handlePointerMove = (e: React.PointerEvent<SVGSVGElement>) => {
     const rect = e.currentTarget.getBoundingClientRect();
-    const relX = ((e.clientX - rect.left) / rect.width) * CHART_WIDTH;
+    const relX = ((e.clientX - rect.left) / rect.width) * chartWidth;
     let nearest = 0;
     let nearestDist = Infinity;
     points.forEach((p, i) => {
@@ -82,7 +98,7 @@ export const WeightTrendChart: React.FC<WeightTrendChartProps> = ({
   };
 
   return (
-    <div className="relative">
+    <div className="relative" ref={containerRef}>
       <div className="flex items-baseline justify-between mb-1">
         <span className="text-xs text-muted">
           체중 추이 · 최근 30일 · {deltaLabel}
@@ -92,7 +108,7 @@ export const WeightTrendChart: React.FC<WeightTrendChartProps> = ({
         </span>
       </div>
       <svg
-        viewBox={`0 0 ${CHART_WIDTH} ${CHART_HEIGHT}`}
+        viewBox={`0 0 ${chartWidth} ${CHART_HEIGHT}`}
         preserveAspectRatio="none"
         className="w-full h-14 touch-none"
         onPointerMove={handlePointerMove}
@@ -138,7 +154,7 @@ export const WeightTrendChart: React.FC<WeightTrendChartProps> = ({
         <div
           className="absolute -top-1 bg-foreground text-background text-xs px-2 py-1 rounded-md pointer-events-none whitespace-nowrap"
           style={{
-            left: `${(hovered.x / CHART_WIDTH) * 100}%`,
+            left: `${(hovered.x / chartWidth) * 100}%`,
             transform: "translate(-50%, -100%)",
           }}
         >
