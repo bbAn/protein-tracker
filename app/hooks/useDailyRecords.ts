@@ -631,10 +631,62 @@ export const useDailyRecords = (
     }
   };
 
-  // 생리기간을 시작일~종료일로 한 번에 기록 (양 끝 날짜 포함, YYYY-MM-DD 문자열)
-  const setPeriodRange = async (
+  // dateKey 기준 하루씩 앞뒤로 훑어서, 선택한 날짜가 포함된 연속된
+  // 생리기간 구간을 찾음 (입력창을 기존 기간으로 채워주기 위함)
+  const getPeriodRangeForDate = (
+    dateKey: string
+  ): { start: string; end: string } | null => {
+    if (!dailyRecords[dateKey]?.isPeriod) return null;
+
+    let start = new Date(dateKey);
+    while (true) {
+      const prev = new Date(start.getTime() - 86400000);
+      if (!dailyRecords[prev.toDateString()]?.isPeriod) break;
+      start = prev;
+    }
+
+    let end = new Date(dateKey);
+    while (true) {
+      const next = new Date(end.getTime() + 86400000);
+      if (!dailyRecords[next.toDateString()]?.isPeriod) break;
+      end = next;
+    }
+
+    return {
+      start: dateKeyToDateString(start.toDateString()),
+      end: dateKeyToDateString(end.toDateString()),
+    };
+  };
+
+  // YYYY-MM-DD 문자열 범위(양 끝 포함)를 UTC 기준으로 하루씩 나열
+  const enumerateDateStrings = (
     startDateString: string,
     endDateString: string
+  ): string[] => {
+    const [sy, sm, sd] = startDateString.split("-").map(Number);
+    const [ey, em, ed] = endDateString.split("-").map(Number);
+    const startUTC = Date.UTC(sy, sm - 1, sd);
+    const endUTC = Date.UTC(ey, em - 1, ed);
+
+    const dateStrings: string[] = [];
+    for (let t = startUTC; t <= endUTC; t += 86400000) {
+      const d = new Date(t);
+      const y = d.getUTCFullYear();
+      const m = String(d.getUTCMonth() + 1).padStart(2, "0");
+      const day = String(d.getUTCDate()).padStart(2, "0");
+      dateStrings.push(`${y}-${m}-${day}`);
+    }
+    return dateStrings;
+  };
+
+  // 생리기간을 시작일~종료일로 한 번에 기록 (양 끝 날짜 포함, YYYY-MM-DD 문자열).
+  // oldStart/oldEnd를 함께 주면 그 구간을 먼저 지우고 새 구간으로 대체함
+  // (기존에 기록한 기간을 수정하는 경우)
+  const setPeriodRange = async (
+    startDateString: string,
+    endDateString: string,
+    oldStartDateString?: string,
+    oldEndDateString?: string
   ): Promise<boolean> => {
     if (!user) return false;
 
@@ -656,20 +708,27 @@ export const useDailyRecords = (
       return false;
     }
 
-    const dateStrings: string[] = [];
-    for (let t = startUTC; t <= endUTC; t += 86400000) {
-      const d = new Date(t);
-      const y = d.getUTCFullYear();
-      const m = String(d.getUTCMonth() + 1).padStart(2, "0");
-      const day = String(d.getUTCDate()).padStart(2, "0");
-      dateStrings.push(`${y}-${m}-${day}`);
-    }
+    const dateStrings = enumerateDateStrings(startDateString, endDateString);
+    const oldDateStrings =
+      oldStartDateString && oldEndDateString
+        ? enumerateDateStrings(oldStartDateString, oldEndDateString)
+        : [];
 
     try {
       const profileId = await getUserProfileId(user.id);
       if (!profileId) {
         alert("사용자 프로필을 찾을 수 없습니다.");
         return false;
+      }
+
+      if (oldDateStrings.length > 0) {
+        const { error: deleteError } = await supabase
+          .from("period_records")
+          .delete()
+          .eq("user_id", profileId)
+          .gte("record_date", oldDateStrings[0])
+          .lte("record_date", oldDateStrings[oldDateStrings.length - 1]);
+        if (deleteError) throw deleteError;
       }
 
       const { error } = await supabase.from("period_records").upsert(
@@ -683,6 +742,15 @@ export const useDailyRecords = (
       if (error) throw error;
 
       const updatedRecords = { ...dailyRecords };
+      oldDateStrings.forEach((dateStr) => {
+        const dateKey = dateStringToDateKey(dateStr);
+        if (updatedRecords[dateKey]) {
+          updatedRecords[dateKey] = {
+            ...updatedRecords[dateKey],
+            isPeriod: false,
+          };
+        }
+      });
       dateStrings.forEach((dateStr) => {
         const dateKey = dateStringToDateKey(dateStr);
         if (!updatedRecords[dateKey]) {
@@ -776,6 +844,7 @@ export const useDailyRecords = (
     // 유틸리티
     getDayRecord,
     getTotalProtein,
+    getPeriodRangeForDate,
 
     // 액션
     loadMonth,

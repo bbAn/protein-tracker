@@ -52,7 +52,15 @@ interface DailyRecordPanelProps {
   onToggleStrength: () => void;
   gender: Gender;
   onTogglePeriod: () => void;
-  onSetPeriodRange: (startDate: string, endDate: string) => void;
+  onSetPeriodRange: (
+    startDate: string,
+    endDate: string,
+    oldStartDate?: string,
+    oldEndDate?: string
+  ) => void;
+  getPeriodRangeForDate: (
+    dateKey: string
+  ) => { start: string; end: string } | null;
   dateBodyWeight?: number;
   onDateBodyWeightChange: (weight: number) => void;
   weightHistory: { date: string; weight: number }[];
@@ -85,6 +93,7 @@ export const DailyRecordPanel: React.FC<DailyRecordPanelProps> = ({
   gender,
   onTogglePeriod,
   onSetPeriodRange,
+  getPeriodRangeForDate,
   dateBodyWeight,
   onDateBodyWeightChange,
   weightHistory,
@@ -261,22 +270,45 @@ export const DailyRecordPanel: React.FC<DailyRecordPanelProps> = ({
     onDateBodyWeightChange(weight);
   };
 
-  const [periodStart, setPeriodStart] = useState(
-    dateKeyToDateString(selectedDate)
-  );
-  const [periodEnd, setPeriodEnd] = useState(
-    dateKeyToDateString(selectedDate)
-  );
+  const [periodStart, setPeriodStart] = useState(() => {
+    const existing = getPeriodRangeForDate(selectedDate);
+    return existing?.start ?? dateKeyToDateString(selectedDate);
+  });
+  const [periodEnd, setPeriodEnd] = useState(() => {
+    const existing = getPeriodRangeForDate(selectedDate);
+    return existing?.end ?? dateKeyToDateString(selectedDate);
+  });
+  // 수정 대상인 기존 기간(있다면). 적용 시 이 구간을 먼저 지우고
+  // 새 구간으로 대체해서, 새 범위를 적용해도 이전 범위가 남지 않게 함
+  const [oldPeriodRange, setOldPeriodRange] = useState<{
+    start: string;
+    end: string;
+  } | null>(() => getPeriodRangeForDate(selectedDate));
 
-  // 날짜를 바꾸면 기간 입력도 그 날짜로 다시 채움
+  // 날짜를 바꾸면, 그 날짜가 속한 기존 생리기간이 있으면 그 기간으로,
+  // 없으면 선택한 날짜 하루로 입력창을 다시 채움
   useEffect(() => {
-    const d = dateKeyToDateString(selectedDate);
-    setPeriodStart(d);
-    setPeriodEnd(d);
+    const existing = getPeriodRangeForDate(selectedDate);
+    if (existing) {
+      setPeriodStart(existing.start);
+      setPeriodEnd(existing.end);
+    } else {
+      const d = dateKeyToDateString(selectedDate);
+      setPeriodStart(d);
+      setPeriodEnd(d);
+    }
+    setOldPeriodRange(existing);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedDate]);
 
   const handleApplyPeriodRange = () => {
-    onSetPeriodRange(periodStart, periodEnd);
+    onSetPeriodRange(
+      periodStart,
+      periodEnd,
+      oldPeriodRange?.start,
+      oldPeriodRange?.end
+    );
+    setOldPeriodRange({ start: periodStart, end: periodEnd });
   };
 
   return (
