@@ -94,6 +94,7 @@ export const CalendarView: React.FC<CalendarViewProps> = ({
             postWorkout: [],
             hasCardio: false,
             hasStrength: false,
+            isPeriod: false,
           };
 
           const dayTotal = [
@@ -119,7 +120,11 @@ export const CalendarView: React.FC<CalendarViewProps> = ({
               onClick={() => onDateSelect(dateString)}
               className={`h-14 border rounded-lg cursor-pointer transition-colors ${
                 isSelected
-                  ? "border-accent bg-accent/5"
+                  ? dayRecord.isPeriod
+                    ? "border-accent bg-period-bg"
+                    : "border-accent bg-accent/5"
+                  : dayRecord.isPeriod
+                  ? "border-border bg-period-bg"
                   : isToday
                   ? "border-border bg-muted-bg"
                   : "border-border hover:bg-muted-bg"

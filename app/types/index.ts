@@ -28,6 +28,7 @@ export interface DayRecord {
   hasCardio: boolean;
   hasStrength: boolean;
   bodyWeight?: number;
+  isPeriod: boolean;
 }
 
 export interface NutritionLookupResult {
@@ -88,6 +89,13 @@ export interface BodyWeightRecord {
   user_id: string;
   record_date: string;
   weight: number;
+  created_at: string;
+}
+
+export interface PeriodRecord {
+  id: number;
+  user_id: string;
+  record_date: string;
   created_at: string;
 }
 

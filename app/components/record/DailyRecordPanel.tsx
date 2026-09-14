@@ -4,10 +4,12 @@ import { MEAL_NAMES } from "../../constants";
 import {
   DayRecord,
   FoodItem,
+  Gender,
   MealType,
   NutritionLookupResult,
   SupplementDatabaseItem,
 } from "../../types";
+import { dateKeyToDateString } from "../../utils/dateUtils";
 import { WeightTrendChart } from "./WeightTrendChart";
 
 interface DirectInputState {
@@ -48,6 +50,9 @@ interface DailyRecordPanelProps {
   directInputData: DirectInputData;
   onToggleCardio: () => void;
   onToggleStrength: () => void;
+  gender: Gender;
+  onTogglePeriod: () => void;
+  onSetPeriodRange: (startDate: string, endDate: string) => void;
   dateBodyWeight?: number;
   onDateBodyWeightChange: (weight: number) => void;
   weightHistory: { date: string; weight: number }[];
@@ -77,6 +82,9 @@ export const DailyRecordPanel: React.FC<DailyRecordPanelProps> = ({
   directInputData,
   onToggleCardio,
   onToggleStrength,
+  gender,
+  onTogglePeriod,
+  onSetPeriodRange,
   dateBodyWeight,
   onDateBodyWeightChange,
   weightHistory,
@@ -253,6 +261,24 @@ export const DailyRecordPanel: React.FC<DailyRecordPanelProps> = ({
     onDateBodyWeightChange(weight);
   };
 
+  const [periodStart, setPeriodStart] = useState(
+    dateKeyToDateString(selectedDate)
+  );
+  const [periodEnd, setPeriodEnd] = useState(
+    dateKeyToDateString(selectedDate)
+  );
+
+  // 날짜를 바꾸면 기간 입력도 그 날짜로 다시 채움
+  useEffect(() => {
+    const d = dateKeyToDateString(selectedDate);
+    setPeriodStart(d);
+    setPeriodEnd(d);
+  }, [selectedDate]);
+
+  const handleApplyPeriodRange = () => {
+    onSetPeriodRange(periodStart, periodEnd);
+  };
+
   return (
     <div className="bg-surface rounded-xl border border-border p-6">
       <div className="flex justify-between items-center mb-3">
@@ -279,8 +305,44 @@ export const DailyRecordPanel: React.FC<DailyRecordPanelProps> = ({
             />
             <span className="text-sm text-muted">근력운동</span>
           </label>
+          {gender === "female" && (
+            <label className="flex items-center gap-2 cursor-pointer">
+              <input
+                type="checkbox"
+                checked={currentRecord.isPeriod}
+                onChange={onTogglePeriod}
+                className="w-4 h-4 accent-accent"
+              />
+              <span className="text-sm text-muted">생리</span>
+            </label>
+          )}
         </div>
       </div>
+
+      {gender === "female" && (
+        <div className="flex items-center justify-end gap-2 mb-4 flex-wrap">
+          <span className="text-sm text-muted">생리기간</span>
+          <input
+            type="date"
+            value={periodStart}
+            onChange={(e) => setPeriodStart(e.target.value)}
+            className="p-1 text-sm border border-border rounded-lg focus:ring-2 focus:ring-accent"
+          />
+          <span className="text-sm text-muted">~</span>
+          <input
+            type="date"
+            value={periodEnd}
+            onChange={(e) => setPeriodEnd(e.target.value)}
+            className="p-1 text-sm border border-border rounded-lg focus:ring-2 focus:ring-accent"
+          />
+          <button
+            onClick={handleApplyPeriodRange}
+            className="px-3 py-1 text-sm bg-muted-bg text-foreground rounded-lg hover:bg-muted-bg-hover"
+          >
+            적용
+          </button>
+        </div>
+      )}
 
       <div className="flex justify-end mb-4">
         <label className="flex items-center gap-2">

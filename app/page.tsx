@@ -268,6 +268,13 @@ const ProteinTracker: React.FC = () => {
             onToggleStrength={() =>
               dailyRecords.toggleStrength(dateState.selected)
             }
+            gender={bodyWeight.gender}
+            onTogglePeriod={() =>
+              dailyRecords.togglePeriod(dateState.selected)
+            }
+            onSetPeriodRange={(start, end) =>
+              dailyRecords.setPeriodRange(start, end)
+            }
             dateBodyWeight={currentRecord.bodyWeight}
             onDateBodyWeightChange={(weight) =>
               dailyRecords.setBodyWeightForDate(dateState.selected, weight)

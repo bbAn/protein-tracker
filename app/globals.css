@@ -12,6 +12,7 @@
   --accent-hover: #4338ca;
   --success: #16a34a;
   --danger: #dc2626;
+  --period-bg: color-mix(in srgb, var(--accent) 10%, transparent);
 }
 
 :root[data-theme="dark"] {
@@ -26,6 +27,7 @@
   --accent-hover: #818cf8;
   --success: #22c55e;
   --danger: #f87171;
+  --period-bg: color-mix(in srgb, var(--accent) 22%, transparent);
 }
 
 @theme inline {
@@ -40,6 +42,7 @@
   --color-accent-hover: var(--accent-hover);
   --color-success: var(--success);
   --color-danger: var(--danger);
+  --color-period-bg: var(--period-bg);
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
 }
@@ -48,4 +51,9 @@ body {
   background: var(--background);
   color: var(--foreground);
   font-family: var(--font-sans), Arial, Helvetica, sans-serif;
+}
+
+/* 다크 모드에서 날짜 입력의 달력 아이콘이 검게 나와 안 보이는 문제 방지 */
+:root[data-theme="dark"] input[type="date"] {
+  color-scheme: dark;
 }

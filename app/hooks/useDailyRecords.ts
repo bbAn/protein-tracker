@@ -7,6 +7,7 @@ import {
   DayRecord,
   FoodItem,
   MealType,
+  PeriodRecord,
   SupabaseUser,
   SupplementRecord,
 } from "../types";
@@ -34,6 +35,7 @@ const emptyDayRecord = (): DayRecord => ({
   },
   hasCardio: false,
   hasStrength: false,
+  isPeriod: false,
 });
 
 export const useDailyRecords = (
@@ -144,6 +146,7 @@ export const useDailyRecords = (
           { data: records, error: recordsError },
           { data: supplementRecords, error: supplementError },
           { data: weightRecords, error: weightError },
+          { data: periodRecords, error: periodError },
         ] = await Promise.race([
           Promise.all([
             supabase
@@ -166,6 +169,12 @@ export const useDailyRecords = (
               .eq("user_id", profileId)
               .gte("record_date", monthStart)
               .lt("record_date", monthEnd),
+            supabase
+              .from("period_records")
+              .select("*")
+              .eq("user_id", profileId)
+              .gte("record_date", monthStart)
+              .lt("record_date", monthEnd),
           ]),
           timeout,
         ]);
@@ -174,8 +183,9 @@ export const useDailyRecords = (
         if (supplementError)
           console.error("영양제 기록 조회 실패:", supplementError);
         if (weightError) console.error("체중 기록 조회 실패:", weightError);
+        if (periodError) console.error("생리기간 기록 조회 실패:", periodError);
 
-        if (records || supplementRecords || weightRecords) {
+        if (records || supplementRecords || weightRecords || periodRecords) {
           setDailyRecords((prev) => {
             const recordsMap: Record<string, DayRecord> = { ...prev };
 
@@ -214,6 +224,15 @@ export const useDailyRecords = (
                 recordsMap[dateKey] = emptyDayRecord();
               }
               recordsMap[dateKey].bodyWeight = record.weight;
+            });
+
+            periodRecords?.forEach((record: PeriodRecord) => {
+              const dateKey = dateStringToDateKey(record.record_date);
+
+              if (!recordsMap[dateKey]) {
+                recordsMap[dateKey] = emptyDayRecord();
+              }
+              recordsMap[dateKey].isPeriod = true;
             });
 
             return recordsMap;
@@ -569,6 +588,123 @@ export const useDailyRecords = (
     }
   };
 
+  // 생리기간 토글 (행 존재 여부로 표시: insert/delete)
+  const togglePeriod = async (selectedDate: string): Promise<void> => {
+    if (!user) return;
+
+    const updatedRecords = { ...dailyRecords };
+    if (!updatedRecords[selectedDate]) {
+      updatedRecords[selectedDate] = emptyDayRecord();
+    }
+    const newStatus = !updatedRecords[selectedDate].isPeriod;
+    updatedRecords[selectedDate] = {
+      ...updatedRecords[selectedDate],
+      isPeriod: newStatus,
+    };
+    setDailyRecords(updatedRecords);
+
+    try {
+      const profileId = await getUserProfileId(user.id);
+      if (!profileId) {
+        alert("사용자 프로필을 찾을 수 없습니다.");
+        return;
+      }
+
+      const dbDateString = dateKeyToDateString(selectedDate);
+
+      if (newStatus) {
+        const { error } = await supabase
+          .from("period_records")
+          .insert({ user_id: profileId, record_date: dbDateString });
+        if (error) throw error;
+      } else {
+        const { error } = await supabase
+          .from("period_records")
+          .delete()
+          .eq("user_id", profileId)
+          .eq("record_date", dbDateString);
+        if (error) throw error;
+      }
+    } catch (error) {
+      console.error("❌ 생리기간 토글 실패:", error);
+      alert("생리기간 기록 중 오류가 발생했습니다.");
+    }
+  };
+
+  // 생리기간을 시작일~종료일로 한 번에 기록 (양 끝 날짜 포함, YYYY-MM-DD 문자열)
+  const setPeriodRange = async (
+    startDateString: string,
+    endDateString: string
+  ): Promise<boolean> => {
+    if (!user) return false;
+
+    const [sy, sm, sd] = startDateString.split("-").map(Number);
+    const [ey, em, ed] = endDateString.split("-").map(Number);
+    const startUTC = Date.UTC(sy, sm - 1, sd);
+    const endUTC = Date.UTC(ey, em - 1, ed);
+
+    if (isNaN(startUTC) || isNaN(endUTC) || startUTC > endUTC) {
+      alert("올바른 기간을 입력해주세요.");
+      return false;
+    }
+
+    const daySpan = (endUTC - startUTC) / 86400000 + 1;
+    if (
+      daySpan > 60 &&
+      !confirm(`${daySpan}일 기간을 기록하려고 합니다. 계속할까요?`)
+    ) {
+      return false;
+    }
+
+    const dateStrings: string[] = [];
+    for (let t = startUTC; t <= endUTC; t += 86400000) {
+      const d = new Date(t);
+      const y = d.getUTCFullYear();
+      const m = String(d.getUTCMonth() + 1).padStart(2, "0");
+      const day = String(d.getUTCDate()).padStart(2, "0");
+      dateStrings.push(`${y}-${m}-${day}`);
+    }
+
+    try {
+      const profileId = await getUserProfileId(user.id);
+      if (!profileId) {
+        alert("사용자 프로필을 찾을 수 없습니다.");
+        return false;
+      }
+
+      const { error } = await supabase.from("period_records").upsert(
+        dateStrings.map((record_date) => ({
+          user_id: profileId,
+          record_date,
+        })),
+        { onConflict: "user_id,record_date" }
+      );
+
+      if (error) throw error;
+
+      const updatedRecords = { ...dailyRecords };
+      dateStrings.forEach((dateStr) => {
+        const dateKey = dateStringToDateKey(dateStr);
+        if (!updatedRecords[dateKey]) {
+          updatedRecords[dateKey] = emptyDayRecord();
+        }
+        updatedRecords[dateKey] = {
+          ...updatedRecords[dateKey],
+          isPeriod: true,
+        };
+      });
+      setDailyRecords(updatedRecords);
+
+      return true;
+    } catch (error) {
+      console.error("❌ 생리기간 범위 기록 실패:", error);
+      alert(
+        "생리기간 기록 중 오류가 발생했습니다: " + (error as Error)?.message
+      );
+      return false;
+    }
+  };
+
   // 특정 날짜의 체중 기록
   const setBodyWeightForDate = async (
     selectedDate: string,
@@ -651,6 +787,8 @@ export const useDailyRecords = (
     removeSupplement,
     toggleCardio,
     toggleStrength,
+    togglePeriod,
+    setPeriodRange,
     setBodyWeightForDate,
     resetDailyRecords,
   };
