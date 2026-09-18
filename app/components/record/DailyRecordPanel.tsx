@@ -351,7 +351,7 @@ export const DailyRecordPanel: React.FC<DailyRecordPanelProps> = ({
         </div>
       </div>
 
-      {gender === "female" && (
+      {gender === "female" && currentRecord.isPeriod && (
         <div className="flex items-center justify-end gap-2 mb-4 flex-wrap">
           <span className="text-sm text-muted">생리기간</span>
           <input
