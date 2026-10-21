@@ -1,5 +1,5 @@
 import { Check, Edit, Plus, Trash2, X } from 'lucide-react';
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { SupplementDatabaseItem } from '../../types';
 
 interface FoodItem {
@@ -32,6 +32,11 @@ interface SettingsModalProps {
   onGenderChange: (gender: 'male' | 'female') => void;
   onProteinGoalChange: (goal: string) => void;
   getProteinMultipliers: () => ProteinGoalConfig;
+  customProteinTarget: number | null;
+  tempCustomProteinTarget: string;
+  onCustomProteinTargetChange: (value: string) => void;
+  onCustomProteinTargetSubmit: () => void;
+  onDisableCustomProteinTarget: () => void;
   foodDatabase: FoodItem[];
   newFood: { name: string; protein: string };
   editingFood: number | null;
@@ -75,6 +80,11 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
   onGenderChange,
   onProteinGoalChange,
   getProteinMultipliers,
+  customProteinTarget,
+  tempCustomProteinTarget,
+  onCustomProteinTargetChange,
+  onCustomProteinTargetSubmit,
+  onDisableCustomProteinTarget,
   foodDatabase,
   newFood,
   editingFood,
@@ -106,6 +116,16 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
     quantity: '',
     dosage: '',
   });
+
+  // 직접 설정 입력창을 보여줄지 여부. customProteinTarget은 비동기로
+  // 로드되므로, 로드가 끝나 값이 생기면 입력창도 함께 열어줌
+  const [showCustomTarget, setShowCustomTarget] = useState(
+    customProteinTarget !== null,
+  );
+
+  useEffect(() => {
+    if (customProteinTarget !== null) setShowCustomTarget(true);
+  }, [customProteinTarget]);
 
   if (!isOpen) return null;
 
@@ -281,6 +301,47 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
             <p className='text-xs text-muted mt-2'>
               💡 입력 후 엔터키를 누르거나 다른 곳을 클릭하면 저장됩니다.
             </p>
+          </div>
+
+          {/* 단백질 목표량 직접 설정 */}
+          <div className='mb-6'>
+            <label className='flex items-center gap-2 cursor-pointer mb-2'>
+              <input
+                type='checkbox'
+                checked={showCustomTarget}
+                onChange={(e) => {
+                  setShowCustomTarget(e.target.checked);
+                  if (!e.target.checked) onDisableCustomProteinTarget();
+                }}
+                className='w-4 h-4 accent-accent'
+              />
+              <span className='text-sm font-medium text-foreground'>
+                단백질 목표량 직접 설정
+              </span>
+            </label>
+
+            {showCustomTarget && (
+              <>
+                <input
+                  type='number'
+                  value={tempCustomProteinTarget}
+                  onChange={(e) => onCustomProteinTargetChange(e.target.value)}
+                  onBlur={onCustomProteinTargetSubmit}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter') onCustomProteinTargetSubmit();
+                  }}
+                  className='w-full p-2 border border-border rounded-lg focus:ring-2 focus:ring-accent focus:border-transparent'
+                  placeholder='목표 단백질량(g)'
+                  min='1'
+                  step='1'
+                />
+                <p className='text-xs text-muted mt-2'>
+                  💡 체크하고 값을 입력하면, 운동 여부와 무관하게 매일 이
+                  값이 목표량으로 고정됩니다. 체크를 해제하면 위 설정으로
+                  자동 계산됩니다.
+                </p>
+              </>
+            )}
           </div>
 
           {/* 나만의 음식 관리 */}

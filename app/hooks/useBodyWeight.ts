@@ -11,6 +11,12 @@ export const useBodyWeight = (user: SupabaseUser | null) => {
   );
   const [proteinGoal, setProteinGoal] = useState<ProteinGoal>("maintain");
   const [gender, setGender] = useState<Gender>("male");
+  // null이면 자동 계산, 값이 있으면 그 값을 매일 고정으로 사용
+  const [customProteinTarget, setCustomProteinTarget] = useState<
+    number | null
+  >(null);
+  const [tempCustomProteinTarget, setTempCustomProteinTarget] =
+    useState<string>("");
 
   // 사용자 프로필 로드 - auth_id 기반
   const loadUserProfile = useCallback(async (userId: string) => {
@@ -47,6 +53,15 @@ export const useBodyWeight = (user: SupabaseUser | null) => {
         setTempBodyWeight(String(weight));
         setGender(userGender);
         setProteinGoal(userGoal);
+
+        const customTarget =
+          typeof profile.custom_protein_target === "number"
+            ? profile.custom_protein_target
+            : null;
+        setCustomProteinTarget(customTarget);
+        setTempCustomProteinTarget(
+          customTarget !== null ? String(customTarget) : ""
+        );
       }
     } catch (error) {
       console.error("Error loading user profile:", error);
@@ -94,6 +109,8 @@ export const useBodyWeight = (user: SupabaseUser | null) => {
     hasStrength: boolean,
     weightOverride?: number
   ): number => {
+    if (customProteinTarget !== null) return customProteinTarget;
+
     const weight = weightOverride ?? bodyWeight;
     try {
       const currentGender = gender || "male";
@@ -168,6 +185,51 @@ export const useBodyWeight = (user: SupabaseUser | null) => {
     }
   };
 
+  // 직접 설정한 목표 단백질량 업데이트 (null이면 자동 계산으로 되돌림)
+  const updateCustomProteinTarget = async (
+    value: number | null
+  ): Promise<boolean> => {
+    if (!user) {
+      setCustomProteinTarget(value);
+      return true;
+    }
+
+    try {
+      const { error } = await supabase
+        .from("user_profiles")
+        .update({ custom_protein_target: value })
+        .eq("auth_id", user.id);
+
+      if (error) throw error;
+
+      setCustomProteinTarget(value);
+      return true;
+    } catch (error) {
+      console.error("❌ 직접 설정 단백질량 업데이트 실패:", error);
+      alert("단백질 목표량 설정 실패: " + (error as Error)?.message);
+      return false;
+    }
+  };
+
+  // 직접 설정 입력 완료 처리
+  const handleCustomProteinTargetSubmit = (): void => {
+    const value = parseFloat(tempCustomProteinTarget);
+    if (isNaN(value) || value <= 0) {
+      setTempCustomProteinTarget(
+        customProteinTarget !== null ? String(customProteinTarget) : ""
+      );
+      alert("올바른 단백질량을 입력해주세요.");
+      return;
+    }
+    updateCustomProteinTarget(value);
+  };
+
+  // 직접 설정 끄기 (자동 계산으로 전환)
+  const disableCustomProteinTarget = (): void => {
+    setTempCustomProteinTarget("");
+    updateCustomProteinTarget(null);
+  };
+
   // 현재 설정된 단백질 목표의 배수 가져오기
   const getProteinMultipliers = () => {
     const multipliers = PROTEIN_GOALS[gender][proteinGoal];
@@ -186,6 +248,8 @@ export const useBodyWeight = (user: SupabaseUser | null) => {
     setTempBodyWeight(String(DEFAULT_BODY_WEIGHT));
     setProteinGoal("maintain");
     setGender("male");
+    setCustomProteinTarget(null);
+    setTempCustomProteinTarget("");
   };
 
   return {
@@ -194,9 +258,12 @@ export const useBodyWeight = (user: SupabaseUser | null) => {
     tempBodyWeight,
     proteinGoal,
     gender,
+    customProteinTarget,
+    tempCustomProteinTarget,
 
     // 상태 변경
     setTempBodyWeight,
+    setTempCustomProteinTarget,
 
     // 액션
     loadUserProfile,
@@ -205,6 +272,8 @@ export const useBodyWeight = (user: SupabaseUser | null) => {
     getTargetProtein,
     updateGender,
     updateProteinGoal,
+    handleCustomProteinTargetSubmit,
+    disableCustomProteinTarget,
     getProteinMultipliers,
     resetBodyWeight,
   };

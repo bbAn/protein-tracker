@@ -322,6 +322,15 @@ const ProteinTracker: React.FC = () => {
             bodyWeight.updateProteinGoal(goal as ProteinGoal)
           }
           getProteinMultipliers={bodyWeight.getProteinMultipliers}
+          customProteinTarget={bodyWeight.customProteinTarget}
+          tempCustomProteinTarget={bodyWeight.tempCustomProteinTarget}
+          onCustomProteinTargetChange={bodyWeight.setTempCustomProteinTarget}
+          onCustomProteinTargetSubmit={
+            bodyWeight.handleCustomProteinTargetSubmit
+          }
+          onDisableCustomProteinTarget={
+            bodyWeight.disableCustomProteinTarget
+          }
           foodDatabase={food.foodDatabase}
           newFood={food.newFood}
           editingFood={food.editingFood}
