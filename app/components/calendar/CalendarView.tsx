@@ -16,6 +16,7 @@ interface CalendarViewProps {
   isLoading?: boolean;
   onDateChange: (date: Date) => void;
   onDateSelect: (dateString: string) => void;
+  onGoToToday: () => void;
 }
 
 export const CalendarView: React.FC<CalendarViewProps> = ({
@@ -26,6 +27,7 @@ export const CalendarView: React.FC<CalendarViewProps> = ({
   isLoading,
   onDateChange,
   onDateSelect,
+  onGoToToday,
 }) => {
   const today = new Date();
   const isCurrentMonth =
@@ -44,7 +46,7 @@ export const CalendarView: React.FC<CalendarViewProps> = ({
         <div className="flex gap-2">
           {!isCurrentMonth && (
             <button
-              onClick={() => onDateChange(new Date())}
+              onClick={onGoToToday}
               className="px-3 py-1 text-sm bg-accent/10 text-accent rounded-lg hover:bg-accent/20"
             >
               이번 달

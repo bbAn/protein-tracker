@@ -118,6 +118,13 @@ const ProteinTracker: React.FC = () => {
     setDateState((prev) => ({ ...prev, selected: dateString }));
   };
 
+  // "이번 달" 버튼: 달력 뷰도 이번 달로, 선택된 날짜도 오늘로 되돌림
+  const handleGoToToday = () => {
+    const today = new Date();
+    handleDateChange(today);
+    handleDateSelect(today.toDateString());
+  };
+
   // 모달 관련 핸들러
   const openModal = (modalName: keyof ModalState) => {
     setModalState((prev) => ({ ...prev, [modalName]: true }));
@@ -253,6 +260,7 @@ const ProteinTracker: React.FC = () => {
             isLoading={dailyRecords.isLoadingMonth}
             onDateChange={handleDateChange}
             onDateSelect={handleDateSelect}
+            onGoToToday={handleGoToToday}
           />
 
           {/* 일일 기록 */}
